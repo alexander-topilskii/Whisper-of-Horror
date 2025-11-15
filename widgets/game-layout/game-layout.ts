@@ -801,14 +801,24 @@ function ensureStyles() {
 
       .woh-actions {
         flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
+        align-items: stretch;
+        gap: 10px;
+      }
+
+      .woh-action-dots {
+        justify-content: center;
       }
 
       .woh-deck-status {
         flex-direction: column;
         align-items: flex-start;
         gap: 6px;
+        width: 100%;
+      }
+
+      .woh-deck-indicator {
+        justify-content: space-between;
+        width: 100%;
       }
 
       .woh-hand {
@@ -827,6 +837,12 @@ function ensureStyles() {
 
       .woh-card-description {
         font-size: 0.72rem;
+      }
+
+      .woh-card-costs {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
       }
 
       .woh-character-stats {
@@ -853,6 +869,29 @@ function ensureStyles() {
       .woh-effect-chip {
         width: 100%;
         text-align: center;
+      }
+
+      .woh-world-tracks {
+        gap: 12px;
+      }
+
+      .woh-track {
+        gap: 6px;
+      }
+
+      .woh-track-label {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+        font-size: 0.72rem;
+      }
+
+      .woh-track-bar {
+        height: 12px;
+      }
+
+      .woh-track-marks {
+        padding: 0 6px;
       }
 
       .woh-npc-row {
@@ -885,6 +924,10 @@ function ensureStyles() {
 
       .woh-event-deck {
         gap: 6px;
+        width: 100%;
+      }
+
+      .woh-event-deck span {
         width: 100%;
       }
 
@@ -925,6 +968,14 @@ function ensureStyles() {
         padding: 10px;
       }
 
+      .woh-actions {
+        gap: 8px;
+      }
+
+      .woh-action-dots {
+        gap: 4px;
+      }
+
       .woh-hand-card {
         flex: 0 0 92%;
       }
@@ -942,12 +993,47 @@ function ensureStyles() {
         font-size: 0.75rem;
       }
 
+      .woh-event-main {
+        padding: 12px;
+      }
+
+      .woh-event-deck {
+        padding: 10px;
+        gap: 8px;
+      }
+
+      .woh-event-deck span {
+        font-size: 0.7rem;
+      }
+
+      .woh-choice-button {
+        padding: 8px 12px;
+        font-size: 0.72rem;
+      }
+
+      .woh-track-label {
+        font-size: 0.68rem;
+      }
+
+      .woh-track-marks {
+        padding: 0 4px;
+      }
+
+      .woh-stat-card {
+        padding: 10px;
+      }
+
       .woh-log {
         padding: 12px 10px;
       }
 
       .woh-log-entry-body {
         font-size: 0.72rem;
+      }
+
+      .woh-log-header {
+        gap: 4px;
+        width: 100%;
       }
     }
   `;
