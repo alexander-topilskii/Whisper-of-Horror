@@ -207,6 +207,8 @@ function ensureStyles() {
       overflow-x: auto;
       padding-bottom: 4px;
       scrollbar-width: thin;
+      scroll-snap-type: x proximity;
+      -webkit-overflow-scrolling: touch;
     }
 
     .woh-hand-card {
@@ -221,6 +223,7 @@ function ensureStyles() {
       gap: 8px;
       cursor: pointer;
       transition: transform 0.2s ease, border-color 0.2s ease;
+      scroll-snap-align: start;
     }
 
     .woh-hand-card:hover,
@@ -483,6 +486,8 @@ function ensureStyles() {
       overflow-x: auto;
       padding-bottom: 4px;
       scrollbar-width: thin;
+      scroll-snap-type: x proximity;
+      -webkit-overflow-scrolling: touch;
     }
 
     .woh-npc-card {
@@ -494,6 +499,7 @@ function ensureStyles() {
       display: flex;
       flex-direction: column;
       gap: 10px;
+      scroll-snap-align: start;
     }
 
     .woh-npc-header {
@@ -728,6 +734,10 @@ function ensureStyles() {
         gap: 8px;
       }
 
+      .woh-header-actions .woh-button {
+        width: 100%;
+      }
+
       .woh-main {
         padding: 16px;
         gap: 16px;
@@ -747,8 +757,197 @@ function ensureStyles() {
         gap: 8px;
       }
 
+      .woh-event-choices {
+        display: grid;
+        gap: 8px;
+      }
+
       .woh-log {
         padding: 16px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .woh-logo-mark {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        font-size: 0.75rem;
+        gap: 8px;
+      }
+
+      .woh-logo-icon {
+        width: 28px;
+        height: 28px;
+        font-size: 0.6rem;
+      }
+
+      .woh-main {
+        padding: 12px;
+      }
+
+      .woh-panel {
+        padding: 12px;
+      }
+
+      .woh-panel-title {
+        font-size: 0.88rem;
+        margin-bottom: 10px;
+      }
+
+      .woh-turn-resources {
+        gap: 12px;
+      }
+
+      .woh-actions {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+      .woh-deck-status {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+
+      .woh-hand {
+        gap: 10px;
+        padding-bottom: 6px;
+      }
+
+      .woh-hand-card {
+        flex: 0 0 85%;
+        max-width: 320px;
+      }
+
+      .woh-card-title {
+        font-size: 0.88rem;
+      }
+
+      .woh-card-description {
+        font-size: 0.72rem;
+      }
+
+      .woh-character-stats {
+        grid-template-columns: 1fr;
+      }
+
+      .woh-phase {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        text-align: left;
+      }
+
+      .woh-phase-labels {
+        text-align: left;
+        align-items: flex-start;
+      }
+
+      .woh-effects {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .woh-effect-chip {
+        width: 100%;
+        text-align: center;
+      }
+
+      .woh-npc-row {
+        flex-direction: column;
+        overflow-x: visible;
+        gap: 10px;
+      }
+
+      .woh-npc-card {
+        flex: 1 1 auto;
+        width: 100%;
+      }
+
+      .woh-event-main {
+        padding: 14px;
+      }
+
+      .woh-event-title {
+        font-size: 1rem;
+      }
+
+      .woh-event-flavor,
+      .woh-event-effect {
+        font-size: 0.78rem;
+      }
+
+      .woh-choice-button {
+        width: 100%;
+      }
+
+      .woh-event-deck {
+        gap: 6px;
+        width: 100%;
+      }
+
+      .woh-log {
+        padding: 14px;
+      }
+
+      .woh-log-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+
+      .woh-log-entry {
+        padding: 10px 12px;
+      }
+
+      .woh-log-entry-body {
+        font-size: 0.76rem;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .woh-header {
+        padding: 14px 12px;
+      }
+
+      .woh-header-actions {
+        gap: 6px;
+      }
+
+      .woh-main {
+        padding: 10px;
+        gap: 12px;
+      }
+
+      .woh-panel {
+        padding: 10px;
+      }
+
+      .woh-hand-card {
+        flex: 0 0 92%;
+      }
+
+      .woh-panel-title {
+        font-size: 0.84rem;
+      }
+
+      .woh-event-title {
+        font-size: 0.95rem;
+      }
+
+      .woh-event-flavor,
+      .woh-event-effect {
+        font-size: 0.75rem;
+      }
+
+      .woh-log {
+        padding: 12px 10px;
+      }
+
+      .woh-log-entry-body {
+        font-size: 0.72rem;
       }
     }
   `;
