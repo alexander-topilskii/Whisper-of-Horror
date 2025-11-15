@@ -1,3 +1,13 @@
+import {
+  AppendLogEntryCommand,
+  GameEngine,
+  PlayCardCommand,
+  ResolveEventChoiceCommand,
+  StartNewGameCommand,
+  ToggleSoundCommand,
+} from "../game-engine/game-engine";
+import type { GameState } from "../game-engine/game-engine";
+
 const STYLE_TOKEN = "woh-game-layout-styles";
 
 function ensureStyles() {
@@ -1049,9 +1059,16 @@ const TEMPLATE = `
         <span>Whisper of Horror</span>
       </div>
       <div class="woh-header-actions">
-        <button class="woh-button" type="button">Новая партия</button>
-        <button class="woh-button" type="button">Настройки</button>
-        <button class="woh-button woh-sound-toggle" type="button" aria-label="Переключить звук">🔊</button>
+        <button class="woh-button" type="button" data-action="new-game">Новая партия</button>
+        <button class="woh-button" type="button" data-action="settings">Настройки</button>
+        <button
+          class="woh-button woh-sound-toggle"
+          type="button"
+          data-action="toggle-sound"
+          aria-label="Переключить звук"
+        >
+          🔊
+        </button>
       </div>
     </header>
     <div class="woh-main">
@@ -1060,257 +1077,549 @@ const TEMPLATE = `
           <h2 class="woh-panel-title">Ресурсы Хода</h2>
           <div class="woh-turn-resources">
             <div class="woh-actions">
-              <div class="woh-action-dots" role="group" aria-label="Очки действия">
-                <span class="woh-action-dot is-active"></span>
-                <span class="woh-action-dot is-active"></span>
-                <span class="woh-action-dot is-active"></span>
-              </div>
-              <span class="woh-actions-label">Действия: 3/3</span>
+              <div class="woh-action-dots" role="group" aria-label="Очки действия" data-role="action-dots"></div>
+              <span class="woh-actions-label" data-role="actions-label"></span>
             </div>
-            <div class="woh-deck-status">
-              <div class="woh-deck-indicator">
-                <span class="woh-deck-icon">🂠</span>
-                <span>Колода: 23</span>
-              </div>
-              <div class="woh-deck-indicator">
-                <span class="woh-deck-icon">♻︎</span>
-                <span>Сброс: 6</span>
-              </div>
-            </div>
+            <div class="woh-deck-status" data-role="player-deck"></div>
           </div>
         </article>
         <article class="woh-panel">
           <h2 class="woh-panel-title">Рука</h2>
-          <div class="woh-hand" role="list">
-            <div class="woh-hand-card woh-tooltip" role="listitem" tabindex="0" data-tooltip="Раскройте карту местности и откройте тайный проход." data-expanded="false">
-              <div class="woh-card-title">Фонарик Сыщика</div>
-              <div class="woh-card-description">Сделайте проверку наблюдательности. При успехе откройте дополнительную улику.</div>
-              <div class="woh-card-costs">
-                <span>Стоимость: 1 ⌛</span>
-                <span>+1 🔍</span>
-              </div>
-            </div>
-            <div class="woh-hand-card woh-tooltip" role="listitem" tabindex="0" data-tooltip="Примите обезболивающее. Снимите 2 урона, получите 1 токен сонливости." data-expanded="false">
-              <div class="woh-card-title">Морфий</div>
-              <div class="woh-card-description">Снимите до 2 единиц урона. Получите состояние "Сонный".</div>
-              <div class="woh-card-costs">
-                <span>Стоимость: 1 💉</span>
-              </div>
-            </div>
-            <div class="woh-hand-card woh-tooltip" role="listitem" tabindex="0" data-tooltip="Сработает только в туманной локации." data-expanded="false" data-playable="false">
-              <div class="woh-card-title">Колокольчик Зова</div>
-              <div class="woh-card-description">Призовите дух проводника. Он отвечает на один вопрос о случившемся.</div>
-              <div class="woh-card-costs">
-                <span>Стоимость: 2 ✨</span>
-              </div>
-            </div>
-            <div class="woh-hand-card woh-tooltip" role="listitem" tabindex="0" data-tooltip="Используйте чтобы снять эффект паники." data-expanded="false">
-              <div class="woh-card-title">Глубокий Вдох</div>
-              <div class="woh-card-description">Потратьте действие, чтобы сбросить состояние "Паника" и восстановить 1 рассудок.</div>
-              <div class="woh-card-costs">
-                <span>Стоимость: 1 ⌛</span>
-              </div>
-            </div>
-            <div class="woh-hand-card woh-tooltip" role="listitem" tabindex="0" data-tooltip="Карты позволяют подготовить сюжетный рывок." data-expanded="false">
-              <div class="woh-card-title">Записки Сектанта</div>
-              <div class="woh-card-description">Получите улику. Если у вас есть "Шифровальная Решётка", вместо этого продвиньтесь на 1 по треку Расследования.</div>
-              <div class="woh-card-costs">
-                <span>Стоимость: 2 🧠</span>
-              </div>
-            </div>
-          </div>
-        </article>
-      </section>
-      <section class="woh-column woh-column--center">
-        <article class="woh-panel">
-          <h2 class="woh-panel-title">Состояние Истории</h2>
-          <div class="woh-world-tracks">
-            <div class="woh-track woh-track--victory">
-              <div class="woh-track-label">
-                <span>Расследование</span>
-                <span>5 / 8</span>
-              </div>
-              <div class="woh-track-bar">
-                <div class="woh-track-progress"></div>
-                <div class="woh-track-marks">
-                  <span class="woh-track-mark"></span>
-                  <span class="woh-track-mark"></span>
-                  <span class="woh-track-mark is-critical"></span>
-                  <span class="woh-track-mark"></span>
-                  <span class="woh-track-mark"></span>
-                </div>
-              </div>
-            </div>
-            <div class="woh-track woh-track--doom">
-              <div class="woh-track-label">
-                <span>Разрушение</span>
-                <span>3 / 10</span>
-              </div>
-              <div class="woh-track-bar">
-                <div class="woh-track-progress"></div>
-                <div class="woh-track-marks">
-                  <span class="woh-track-mark"></span>
-                  <span class="woh-track-mark"></span>
-                  <span class="woh-track-mark is-critical"></span>
-                  <span class="woh-track-mark"></span>
-                  <span class="woh-track-mark"></span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </article>
-        <article class="woh-panel">
-          <h2 class="woh-panel-title">Параметры Персонажа</h2>
-          <div class="woh-character-stats">
-            <div class="woh-stat-card">
-              <span class="woh-stat-title">Здоровье</span>
-              <div class="woh-stat-value">6<span>/ 8</span></div>
-            </div>
-            <div class="woh-stat-card is-critical">
-              <span class="woh-stat-title">Рассудок</span>
-              <div class="woh-stat-value">3<span>/ 7</span></div>
-            </div>
-          </div>
+          <div class="woh-hand" role="list" data-role="hand"></div>
         </article>
         <article class="woh-panel">
           <h2 class="woh-panel-title">Фаза Мира</h2>
           <div class="woh-phase">
-            <div class="woh-phase-icon" aria-hidden="true">🌙</div>
+            <div class="woh-phase-icon" aria-hidden="true" data-role="phase-icon"></div>
             <div class="woh-phase-labels">
-              <span class="woh-phase-title">Ночь</span>
-              <span class="woh-phase-subtitle">Фаза сновидений</span>
+              <span class="woh-phase-title" data-role="phase-title"></span>
+              <span class="woh-phase-subtitle" data-role="phase-subtitle"></span>
             </div>
           </div>
         </article>
         <article class="woh-panel">
           <h2 class="woh-panel-title">Состояния</h2>
-          <div class="woh-effects">
-            <button class="woh-effect-chip woh-tooltip" type="button" data-tooltip="Снижает успехи проверки наблюдательности на 1." data-expanded="false">Наблюдают</button>
-            <button class="woh-effect-chip woh-tooltip" type="button" data-tooltip="Получите 1 дополнительный урон при следующей атаке." data-expanded="false">Ранен</button>
-            <button class="woh-effect-chip woh-tooltip" type="button" data-tooltip="Вы можете игнорировать один эффект страха в ход." data-expanded="false">Под защитой</button>
-            <button class="woh-effect-chip woh-tooltip" type="button" data-tooltip="Если вы тянете карту ужасов, получите 1 рассудок." data-expanded="false">Паника</button>
-          </div>
+          <div class="woh-effects" data-role="status-effects"></div>
         </article>
         <article class="woh-panel">
           <h2 class="woh-panel-title">Активные NPC</h2>
-          <div class="woh-npc-row">
-            <div class="woh-npc-card woh-tooltip" tabindex="0" data-tooltip="При встрече спросите о детях проповедника. Откроет скрытую локацию." data-expanded="false">
-              <div class="woh-npc-header">
-                <div class="woh-npc-avatar">⟁</div>
-                <div>
-                  <div class="woh-npc-name">Смотритель Часов</div>
-                  <div class="woh-npc-timer">Ходов: 2 / 3</div>
-                </div>
-              </div>
-              <div class="woh-npc-body">Следит за циферблатом, который отображает несуществующее время.</div>
-            </div>
-            <div class="woh-npc-card woh-tooltip" tabindex="0" data-tooltip="Каждый ход усиливает трек Разрушения на 1, если ее не отвлечь." data-expanded="false">
-              <div class="woh-npc-header">
-                <div class="woh-npc-avatar">☽</div>
-                <div>
-                  <div class="woh-npc-name">Лунная Провидица</div>
-                  <div class="woh-npc-timer">Ходов: 1 / 2</div>
-                </div>
-              </div>
-              <div class="woh-npc-body">Шепчет чужие имена. Требует жертву, чтобы замедлить ритуал.</div>
-            </div>
-            <div class="woh-npc-card woh-tooltip" tabindex="0" data-tooltip="Если проигнорировать три хода, лог заполняется кошмарами." data-expanded="false">
-              <div class="woh-npc-header">
-                <div class="woh-npc-avatar">✦</div>
-                <div>
-                  <div class="woh-npc-name">Эхо Витражей</div>
-                  <div class="woh-npc-timer">Ходов: 3 / 3</div>
-                </div>
-              </div>
-              <div class="woh-npc-body">Аномалия, отражающая забытые решения. Поглощает воспоминания.</div>
-            </div>
-          </div>
+          <div class="woh-npc-row" data-role="npc-list"></div>
+        </article>
+      </section>
+      <section class="woh-column woh-column--center">
+        <article class="woh-panel">
+          <h2 class="woh-panel-title">Треки Кампании</h2>
+          <div class="woh-world-tracks" data-role="world-tracks"></div>
+        </article>
+        <article class="woh-panel">
+          <h2 class="woh-panel-title">Показатели</h2>
+          <div class="woh-character-stats" data-role="character-stats"></div>
         </article>
       </section>
       <section class="woh-column woh-column--right">
         <article class="woh-panel woh-event-card">
           <h2 class="woh-panel-title">Текущее Событие</h2>
           <div class="woh-event-main">
-            <div class="woh-event-title">Шёпот из Трещины</div>
-            <div class="woh-event-flavor">Тонкая линия в полу шепчет голоса тех, кого давно не слышали. Они знают, где ключ от последней двери.</div>
-            <div class="woh-event-effect">Эффект: каждый следователь должен потратить 1 рассудок или поместить жетон разрушения на ближайшую локацию.</div>
-            <div class="woh-event-choices">
-              <button class="woh-choice-button" type="button">Вариант A — Склониться над трещиной</button>
-              <button class="woh-choice-button" type="button">Вариант B — Запечатать мелом</button>
-            </div>
+            <div class="woh-event-title" data-role="event-title"></div>
+            <div class="woh-event-flavor" data-role="event-flavor"></div>
+            <div class="woh-event-effect" data-role="event-effect"></div>
+            <div class="woh-event-choices" data-role="event-choices"></div>
           </div>
-          <div class="woh-event-deck">
-            <span>Колода событий: 12</span>
-            <span>Сброс: 3</span>
-            <span>Следующее: скрыто</span>
-          </div>
+          <div class="woh-event-deck" data-role="event-deck"></div>
         </article>
       </section>
     </div>
     <footer class="woh-log">
       <div class="woh-log-header">
         <span>Журнал Хода</span>
-        <span>Автопрокрутка: Вкл.</span>
+        <span data-role="log-autoscroll"></span>
       </div>
-      <div class="woh-log-entries" aria-live="polite">
-        <div class="woh-log-entry">
-          <span class="woh-log-entry-type">[ХОД 5 · Событие]</span>
-          <span class="woh-log-entry-body">Шёпот из трещины проникает в сознание. Веки тяжелые, но карта складывается в голове.</span>
-        </div>
-        <div class="woh-log-entry">
-          <span class="woh-log-entry-type">[Действие]</span>
-          <span class="woh-log-entry-body">Ты задержался у разбитого фонаря — тень на стене шевельнулась первой.</span>
-        </div>
-        <div class="woh-log-entry">
-          <span class="woh-log-entry-type">[NPC]</span>
-          <span class="woh-log-entry-body">Смотритель Часов перевернул стрелки назад, даруя еще один вдох.</span>
-        </div>
-        <div class="woh-log-entry">
-          <span class="woh-log-entry-type">[Подготовка]</span>
-          <span class="woh-log-entry-body">Рука пополняется из колоды: три новые карты кладутся веером, одна из них пахнет солью.</span>
-        </div>
-      </div>
+      <div class="woh-log-entries" aria-live="polite" data-role="log-entries"></div>
     </footer>
   </div>
 `;
 
+
 export class GameLayout {
   private readonly root: HTMLElement;
+  private engine: GameEngine | null = null;
+  private readonly actionDots: HTMLElement;
+  private readonly actionsLabel: HTMLElement;
+  private readonly playerDeck: HTMLElement;
+  private readonly handList: HTMLElement;
+  private readonly phaseIcon: HTMLElement;
+  private readonly phaseTitle: HTMLElement;
+  private readonly phaseSubtitle: HTMLElement;
+  private readonly statusEffects: HTMLElement;
+  private readonly npcList: HTMLElement;
+  private readonly worldTracks: HTMLElement;
+  private readonly characterStats: HTMLElement;
+  private readonly eventTitle: HTMLElement;
+  private readonly eventFlavor: HTMLElement;
+  private readonly eventEffect: HTMLElement;
+  private readonly eventChoices: HTMLElement;
+  private readonly eventDeck: HTMLElement;
+  private readonly logAutoscroll: HTMLElement;
+  private readonly logEntries: HTMLElement;
+  private readonly soundToggle: HTMLButtonElement;
+  private readonly newGameButton: HTMLButtonElement;
+  private readonly settingsButton: HTMLButtonElement;
+  private lastRenderedLogSize = 0;
+
+  private readonly handleRootCommand = (event: MouseEvent) => {
+    if (!this.engine) {
+      return;
+    }
+
+    const target = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-command]');
+    if (!target) {
+      return;
+    }
+
+    const command = target.dataset.command;
+    if (command === 'play-card') {
+      const cardId = target.dataset.cardId;
+      if (cardId) {
+        this.engine.dispatch(new PlayCardCommand(cardId));
+      }
+      return;
+    }
+
+    if (command === 'resolve-choice') {
+      const choiceId = target.dataset.choiceId;
+      if (choiceId) {
+        this.engine.dispatch(new ResolveEventChoiceCommand(choiceId));
+      }
+    }
+  };
+
+  private readonly handleNewGameClick = () => {
+    if (!this.engine) {
+      return;
+    }
+
+    this.engine.dispatch(new StartNewGameCommand(this.engine.getInitialStateSnapshot()));
+  };
+
+  private readonly handleSettingsClick = () => {
+    if (!this.engine) {
+      return;
+    }
+
+    this.engine.dispatch(new AppendLogEntryCommand('[Система]', 'Меню настроек пока недоступно.'));
+  };
+
+  private readonly handleSoundToggleClick = () => {
+    if (!this.engine) {
+      return;
+    }
+
+    this.engine.dispatch(new ToggleSoundCommand());
+  };
 
   constructor(root: HTMLElement) {
     if (!root) {
-      throw new Error("GameLayout requires a valid root element");
+      throw new Error('GameLayout requires a valid root element');
     }
 
     ensureStyles();
     this.root = root;
     this.root.innerHTML = TEMPLATE;
+
+    this.actionDots = this.requireElement('[data-role="action-dots"]');
+    this.actionsLabel = this.requireElement('[data-role="actions-label"]');
+    this.playerDeck = this.requireElement('[data-role="player-deck"]');
+    this.handList = this.requireElement('[data-role="hand"]');
+    this.phaseIcon = this.requireElement('[data-role="phase-icon"]');
+    this.phaseTitle = this.requireElement('[data-role="phase-title"]');
+    this.phaseSubtitle = this.requireElement('[data-role="phase-subtitle"]');
+    this.statusEffects = this.requireElement('[data-role="status-effects"]');
+    this.npcList = this.requireElement('[data-role="npc-list"]');
+    this.worldTracks = this.requireElement('[data-role="world-tracks"]');
+    this.characterStats = this.requireElement('[data-role="character-stats"]');
+    this.eventTitle = this.requireElement('[data-role="event-title"]');
+    this.eventFlavor = this.requireElement('[data-role="event-flavor"]');
+    this.eventEffect = this.requireElement('[data-role="event-effect"]');
+    this.eventChoices = this.requireElement('[data-role="event-choices"]');
+    this.eventDeck = this.requireElement('[data-role="event-deck"]');
+    this.logAutoscroll = this.requireElement('[data-role="log-autoscroll"]');
+    this.logEntries = this.requireElement('[data-role="log-entries"]');
+    this.soundToggle = this.requireElement<HTMLButtonElement>('[data-action="toggle-sound"]');
+    this.newGameButton = this.requireElement<HTMLButtonElement>('[data-action="new-game"]');
+    this.settingsButton = this.requireElement<HTMLButtonElement>('[data-action="settings"]');
+
     this.enableTooltipToggles();
+    this.newGameButton.addEventListener('click', this.handleNewGameClick);
+    this.settingsButton.addEventListener('click', this.handleSettingsClick);
+    this.soundToggle.addEventListener('click', this.handleSoundToggleClick);
+    this.root.addEventListener('click', this.handleRootCommand);
   }
 
-  private enableTooltipToggles() {
-    const toggleableSelectors = [
-      ".woh-tooltip",
-      ".woh-hand-card",
-      ".woh-effect-chip",
-      ".woh-npc-card"
-    ];
+  public bind(engine: GameEngine): void {
+    if (this.engine) {
+      throw new Error('GameLayout is already bound to an engine');
+    }
 
-    const elements = this.root.querySelectorAll<HTMLElement>(toggleableSelectors.join(","));
+    this.engine = engine;
+  }
 
-    elements.forEach((element) => {
-      element.addEventListener("click", () => {
-        const isExpanded = element.getAttribute("data-expanded") === "true";
-        elements.forEach((el) => el.setAttribute("data-expanded", "false"));
-        element.setAttribute("data-expanded", (!isExpanded).toString());
+  public render(state: GameState): void {
+    this.renderActions(state.turn);
+    this.renderPlayerDeck(state.decks);
+    this.renderHand(state.hand);
+    this.renderPhase(state.phase);
+    this.renderStatuses(state.statuses);
+    this.renderNpcs(state.npcs);
+    this.renderWorldTracks(state.worldTracks);
+    this.renderCharacterStats(state.characterStats);
+    this.renderEvent(state.event, state.decks.event);
+    this.renderLog(state.log, state.autoScrollLog);
+    this.updateSoundToggle(state.soundEnabled);
+  }
+
+  private requireElement<T extends Element>(selector: string): T {
+    const element = this.root.querySelector<T>(selector);
+    if (!element) {
+      throw new Error(`GameLayout expected element ${selector}`);
+    }
+    return element;
+  }
+
+  private renderActions(turn: GameState['turn']): void {
+    this.actionDots.innerHTML = '';
+    const fragment = document.createDocumentFragment();
+    for (let index = 0; index < turn.actions.total; index += 1) {
+      const dot = document.createElement('span');
+      dot.className = 'woh-action-dot';
+      if (index < turn.actions.remaining) {
+        dot.classList.add('is-active');
+      }
+      fragment.append(dot);
+    }
+    this.actionDots.append(fragment);
+    this.actionsLabel.textContent = `Действия: ${turn.actions.remaining}/${turn.actions.total}`;
+  }
+
+  private renderPlayerDeck(decks: GameState['decks']): void {
+    this.playerDeck.innerHTML = '';
+
+    const drawIndicator = document.createElement('div');
+    drawIndicator.className = 'woh-deck-indicator';
+    const drawIcon = document.createElement('span');
+    drawIcon.className = 'woh-deck-icon';
+    drawIcon.textContent = '🂠';
+    const drawLabel = document.createElement('span');
+    drawLabel.textContent = `Колода: ${decks.player.draw}`;
+    drawIndicator.append(drawIcon, drawLabel);
+
+    const discardIndicator = document.createElement('div');
+    discardIndicator.className = 'woh-deck-indicator';
+    const discardIcon = document.createElement('span');
+    discardIcon.className = 'woh-deck-icon';
+    discardIcon.textContent = '♻︎';
+    const discardLabel = document.createElement('span');
+    discardLabel.textContent = `Сброс: ${decks.player.discard}`;
+    discardIndicator.append(discardIcon, discardLabel);
+
+    this.playerDeck.append(drawIndicator, discardIndicator);
+  }
+
+  private renderHand(hand: GameState['hand']): void {
+    this.handList.innerHTML = '';
+    this.handList.setAttribute('role', 'list');
+
+    if (hand.length === 0) {
+      const placeholder = document.createElement('div');
+      placeholder.className = 'woh-hand-card';
+      placeholder.textContent = 'Рука пуста.';
+      this.handList.append(placeholder);
+      return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    hand.forEach((card) => {
+      const cardElement = document.createElement('div');
+      cardElement.className = 'woh-hand-card';
+      cardElement.setAttribute('role', 'listitem');
+      cardElement.tabIndex = 0;
+      cardElement.dataset.command = 'play-card';
+      cardElement.dataset.cardId = card.id;
+      cardElement.dataset.playable = String(card.playable);
+      this.applyTooltip(cardElement, card.tooltip);
+
+      const title = document.createElement('div');
+      title.className = 'woh-card-title';
+      title.textContent = card.name;
+
+      const description = document.createElement('div');
+      description.className = 'woh-card-description';
+      description.textContent = card.description;
+
+      const costs = document.createElement('div');
+      costs.className = 'woh-card-costs';
+      card.costs.forEach((cost) => {
+        const costChip = document.createElement('span');
+        costChip.textContent = cost;
+        costs.append(costChip);
       });
 
-      element.addEventListener("keydown", (event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          element.click();
+      cardElement.append(title, description, costs);
+      fragment.append(cardElement);
+    });
+
+    this.handList.append(fragment);
+  }
+
+  private renderPhase(phase: GameState['phase']): void {
+    this.phaseIcon.textContent = phase.icon;
+    this.phaseTitle.textContent = phase.name;
+    this.phaseSubtitle.textContent = phase.subtitle;
+  }
+
+  private renderStatuses(statuses: GameState['statuses']): void {
+    this.statusEffects.innerHTML = '';
+    const fragment = document.createDocumentFragment();
+
+    statuses.forEach((status) => {
+      const button = document.createElement('button');
+      button.className = 'woh-effect-chip';
+      button.type = 'button';
+      button.textContent = status.name;
+      button.dataset.tone = status.tone;
+      this.applyTooltip(button, status.description);
+      fragment.append(button);
+    });
+
+    this.statusEffects.append(fragment);
+  }
+
+  private renderNpcs(npcs: GameState['npcs']): void {
+    this.npcList.innerHTML = '';
+    const fragment = document.createDocumentFragment();
+
+    npcs.forEach((npc) => {
+      const card = document.createElement('div');
+      card.className = 'woh-npc-card';
+      card.tabIndex = 0;
+      this.applyTooltip(card, npc.tooltip);
+
+      const header = document.createElement('div');
+      header.className = 'woh-npc-header';
+
+      const avatar = document.createElement('div');
+      avatar.className = 'woh-npc-avatar';
+      avatar.textContent = npc.icon;
+
+      const info = document.createElement('div');
+      const name = document.createElement('div');
+      name.className = 'woh-npc-name';
+      name.textContent = npc.name;
+      const timer = document.createElement('div');
+      timer.className = 'woh-npc-timer';
+      timer.textContent = `Ходов: ${npc.timer.current} / ${npc.timer.max}`;
+      info.append(name, timer);
+
+      header.append(avatar, info);
+
+      const body = document.createElement('div');
+      body.className = 'woh-npc-body';
+      body.textContent = npc.description;
+
+      card.append(header, body);
+      fragment.append(card);
+    });
+
+    this.npcList.append(fragment);
+  }
+
+  private renderWorldTracks(tracks: GameState['worldTracks']): void {
+    this.worldTracks.innerHTML = '';
+    const fragment = document.createDocumentFragment();
+
+    tracks.forEach((track) => {
+      const wrapper = document.createElement('div');
+      wrapper.className = `woh-track woh-track--${track.type}`;
+
+      const label = document.createElement('div');
+      label.className = 'woh-track-label';
+      const labelName = document.createElement('span');
+      labelName.textContent = track.label;
+      const labelValue = document.createElement('span');
+      labelValue.textContent = `${track.value} / ${track.max}`;
+      label.append(labelName, labelValue);
+
+      const bar = document.createElement('div');
+      bar.className = 'woh-track-bar';
+
+      const progress = document.createElement('div');
+      progress.className = 'woh-track-progress';
+      const progressWidth = Math.max(0, Math.min(100, (track.value / track.max) * 100));
+      progress.style.width = `${progressWidth}%`;
+      bar.append(progress);
+
+      const marks = document.createElement('div');
+      marks.className = 'woh-track-marks';
+      for (let index = 1; index < track.max; index += 1) {
+        const mark = document.createElement('span');
+        mark.className = 'woh-track-mark';
+        if (track.criticalThreshold && index === track.criticalThreshold) {
+          mark.classList.add('is-critical');
+        }
+        marks.append(mark);
+      }
+      bar.append(marks);
+
+      wrapper.append(label, bar);
+      fragment.append(wrapper);
+    });
+
+    this.worldTracks.append(fragment);
+  }
+
+  private renderCharacterStats(stats: GameState['characterStats']): void {
+    this.characterStats.innerHTML = '';
+    const fragment = document.createDocumentFragment();
+
+    stats.forEach((stat) => {
+      const card = document.createElement('div');
+      card.className = 'woh-stat-card';
+      if (typeof stat.criticalThreshold === 'number' && stat.value <= stat.criticalThreshold) {
+        card.classList.add('is-critical');
+      }
+
+      const title = document.createElement('span');
+      title.className = 'woh-stat-title';
+      title.textContent = stat.label;
+
+      const value = document.createElement('div');
+      value.className = 'woh-stat-value';
+      value.textContent = String(stat.value);
+      const max = document.createElement('span');
+      max.textContent = `/ ${stat.max}`;
+      value.append(max);
+
+      card.append(title, value);
+      fragment.append(card);
+    });
+
+    this.characterStats.append(fragment);
+  }
+
+  private renderEvent(event: GameState['event'], deck: GameState['decks']['event']): void {
+    this.eventTitle.textContent = event.title;
+    this.eventFlavor.textContent = event.flavor;
+    this.eventEffect.textContent = event.effect;
+    this.renderEventChoices(event.choices);
+    this.renderEventDeck(deck);
+  }
+
+  private renderEventChoices(choices: GameState['event']['choices']): void {
+    this.eventChoices.innerHTML = '';
+    const fragment = document.createDocumentFragment();
+
+    choices.forEach((choice) => {
+      const button = document.createElement('button');
+      button.className = 'woh-choice-button';
+      button.type = 'button';
+      button.textContent = choice.label;
+      button.dataset.command = 'resolve-choice';
+      button.dataset.choiceId = choice.id;
+      button.disabled = Boolean(choice.resolved);
+      button.setAttribute('aria-pressed', choice.resolved ? 'true' : 'false');
+      fragment.append(button);
+    });
+
+    this.eventChoices.append(fragment);
+  }
+
+  private renderEventDeck(deck: GameState['decks']['event']): void {
+    this.eventDeck.innerHTML = '';
+
+    const draw = document.createElement('span');
+    draw.textContent = `Колода событий: ${deck.draw}`;
+    const discard = document.createElement('span');
+    discard.textContent = `Сброс: ${deck.discard}`;
+    const next = document.createElement('span');
+    next.textContent = `Следующее: ${deck.next ?? 'скрыто'}`;
+
+    this.eventDeck.append(draw, discard, next);
+  }
+
+  private renderLog(log: GameState['log'], autoScroll: boolean): void {
+    this.logEntries.innerHTML = '';
+    const fragment = document.createDocumentFragment();
+
+    log.forEach((entry) => {
+      const item = document.createElement('div');
+      item.className = 'woh-log-entry';
+
+      const type = document.createElement('span');
+      type.className = 'woh-log-entry-type';
+      type.textContent = entry.type;
+
+      const body = document.createElement('span');
+      body.className = 'woh-log-entry-body';
+      body.textContent = entry.body;
+
+      item.append(type, body);
+      fragment.append(item);
+    });
+
+    this.logEntries.append(fragment);
+    if (autoScroll && log.length !== this.lastRenderedLogSize) {
+      this.logEntries.scrollTo({ top: 0, behavior: this.lastRenderedLogSize ? 'smooth' : 'auto' });
+    }
+    this.lastRenderedLogSize = log.length;
+    this.logAutoscroll.textContent = autoScroll ? 'Автопрокрутка: Вкл.' : 'Автопрокрутка: Выкл.';
+  }
+
+  private updateSoundToggle(enabled: boolean): void {
+    this.soundToggle.textContent = enabled ? '🔊' : '🔇';
+    this.soundToggle.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+  }
+
+  private applyTooltip(element: HTMLElement, tooltip?: string): void {
+    if (!tooltip) {
+      element.classList.remove('woh-tooltip');
+      element.removeAttribute('data-tooltip');
+      element.removeAttribute('data-expanded');
+      return;
+    }
+
+    element.classList.add('woh-tooltip');
+    element.setAttribute('data-tooltip', tooltip);
+    element.setAttribute('data-expanded', 'false');
+  }
+
+  private enableTooltipToggles(): void {
+    this.root.addEventListener('click', (event) => {
+      const target = (event.target as HTMLElement | null)?.closest<HTMLElement>('.woh-tooltip');
+      if (!target || !this.root.contains(target)) {
+        return;
+      }
+
+      const isExpanded = target.getAttribute('data-expanded') === 'true';
+      this.root.querySelectorAll<HTMLElement>('.woh-tooltip[data-expanded="true"]').forEach((element) => {
+        if (element !== target) {
+          element.setAttribute('data-expanded', 'false');
         }
       });
+      target.setAttribute('data-expanded', String(!isExpanded));
+    });
+
+    this.root.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') {
+        return;
+      }
+
+      const target = (event.target as HTMLElement | null)?.closest<HTMLElement>('.woh-tooltip');
+      if (!target || !this.root.contains(target)) {
+        return;
+      }
+
+      event.preventDefault();
+      target.click();
     });
   }
 }
+
