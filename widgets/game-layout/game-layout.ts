@@ -187,6 +187,19 @@ function ensureStyles() {
       color: rgba(183, 222, 216, 0.82);
     }
 
+    .woh-panel-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .woh-panel-header .woh-panel-title {
+      margin-bottom: 0;
+    }
+
     .woh-turn-resources {
       display: flex;
       justify-content: space-between;
@@ -503,6 +516,11 @@ function ensureStyles() {
       border: 1px solid rgba(94, 148, 137, 0.28);
     }
 
+    .woh-phase--compact {
+      padding: 10px 12px;
+      gap: 12px;
+    }
+
     .woh-phase-icon {
       width: 42px;
       height: 42px;
@@ -513,11 +531,21 @@ function ensureStyles() {
       background: radial-gradient(circle at 40% 30%, rgba(238, 212, 132, 0.85), rgba(112, 84, 41, 0.5));
     }
 
+    .woh-phase--compact .woh-phase-icon {
+      width: 36px;
+      height: 36px;
+      font-size: 1rem;
+    }
+
     .woh-phase-labels {
       display: flex;
       flex-direction: column;
       text-align: right;
       gap: 4px;
+    }
+
+    .woh-panel-header .woh-phase-labels {
+      text-align: right;
     }
 
     .woh-phase-title {
@@ -1151,18 +1179,17 @@ const TEMPLATE = `
       </section>
       <section class="woh-column woh-column--center">
         <article class="woh-panel">
-          <h2 class="woh-panel-title">Треки Кампании</h2>
-          <div class="woh-world-tracks" data-role="world-tracks"></div>
-        </article>
-        <article class="woh-panel">
-          <h2 class="woh-panel-title">Фаза Мира</h2>
-          <div class="woh-phase">
-            <div class="woh-phase-icon" aria-hidden="true" data-role="phase-icon"></div>
-            <div class="woh-phase-labels">
-              <span class="woh-phase-title" data-role="phase-title"></span>
-              <span class="woh-phase-subtitle" data-role="phase-subtitle"></span>
+          <div class="woh-panel-header">
+            <h2 class="woh-panel-title">Треки Кампании</h2>
+            <div class="woh-phase woh-phase--compact">
+              <div class="woh-phase-icon" aria-hidden="true" data-role="phase-icon"></div>
+              <div class="woh-phase-labels">
+                <span class="woh-phase-title" data-role="phase-title"></span>
+                <span class="woh-phase-subtitle" data-role="phase-subtitle"></span>
+              </div>
             </div>
           </div>
+          <div class="woh-world-tracks" data-role="world-tracks"></div>
         </article>
         <article class="woh-panel">
           <h2 class="woh-panel-title">Активные NPC</h2>
