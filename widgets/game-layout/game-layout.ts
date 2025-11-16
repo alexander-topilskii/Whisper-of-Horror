@@ -217,76 +217,6 @@ function ensureStyles() {
       margin-bottom: 0;
     }
 
-    .woh-scenario {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
-    .woh-scenario-intro,
-    .woh-scenario-task {
-      border-radius: 12px;
-      padding: 12px;
-      background: var(--woh-panel-surface-deep);
-      border: 1px solid var(--woh-panel-border);
-    }
-
-    .woh-scenario-task {
-      background: var(--woh-panel-surface);
-      border-style: dashed;
-    }
-
-    .woh-scenario-intro-title {
-      font-size: 0.78rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: ${colors.subpanelTitle};
-      margin-bottom: 6px;
-    }
-
-    .woh-scenario-intro-list {
-      margin: 0;
-      padding-left: 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      font-size: 0.78rem;
-      color: ${colors.bodyText};
-    }
-
-    .woh-scenario-task-summary {
-      margin: 0;
-      font-size: 0.85rem;
-      color: ${colors.bodyText};
-    }
-
-    .woh-scenario-conditions {
-      display: grid;
-      gap: 10px;
-    }
-
-    .woh-scenario-condition-title {
-      font-size: 0.72rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: ${colors.subpanelTitle};
-    }
-
-    .woh-scenario-condition-progress {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.78rem;
-      color: ${colors.trackLabel};
-      margin-top: 4px;
-    }
-
-    .woh-scenario-condition-description {
-      margin: 4px 0 0;
-      font-size: 0.8rem;
-      color: ${colors.bodyText};
-    }
-
     .woh-turn-resources {
       display: flex;
       justify-content: space-between;
@@ -983,11 +913,6 @@ function ensureStyles() {
         padding: 14px;
       }
 
-      .woh-scenario-intro,
-      .woh-scenario-task {
-        padding: 10px;
-      }
-
       .woh-event-main {
         padding: 16px;
       }
@@ -1329,19 +1254,6 @@ const TEMPLATE = `
               </div>
             </div>
           </div>
-          <div class="woh-scenario">
-            <section class="woh-scenario-intro" aria-live="polite">
-              <div class="woh-scenario-intro-title" data-role="scenario-intro-title"></div>
-              <ul class="woh-scenario-intro-list" data-role="scenario-intro-body"></ul>
-            </section>
-            <section class="woh-scenario-task">
-              <p class="woh-scenario-task-summary" data-role="scenario-task-summary"></p>
-              <div class="woh-scenario-conditions">
-                <div class="woh-scenario-condition" data-role="scenario-goal"></div>
-                <div class="woh-scenario-condition" data-role="scenario-fail"></div>
-              </div>
-            </section>
-          </div>
           <div class="woh-world-tracks" data-role="world-tracks"></div>
         </article>
         <article class="woh-panel">
@@ -1388,11 +1300,6 @@ export class GameLayout {
   private readonly npcList: HTMLElement;
   private readonly worldTracks: HTMLElement;
   private readonly scenarioTitle: HTMLElement;
-  private readonly scenarioIntroTitle: HTMLElement;
-  private readonly scenarioIntroBody: HTMLElement;
-  private readonly scenarioTaskSummary: HTMLElement;
-  private readonly scenarioGoal: HTMLElement;
-  private readonly scenarioFail: HTMLElement;
   private readonly characterStats: HTMLElement;
   private readonly eventPanel: HTMLElement;
   private readonly eventTitle: HTMLElement;
@@ -1477,11 +1384,6 @@ export class GameLayout {
     this.npcList = this.requireElement('[data-role="npc-list"]');
     this.worldTracks = this.requireElement('[data-role="world-tracks"]');
     this.scenarioTitle = this.requireElement('[data-role="scenario-title"]');
-    this.scenarioIntroTitle = this.requireElement('[data-role="scenario-intro-title"]');
-    this.scenarioIntroBody = this.requireElement('[data-role="scenario-intro-body"]');
-    this.scenarioTaskSummary = this.requireElement('[data-role="scenario-task-summary"]');
-    this.scenarioGoal = this.requireElement('[data-role="scenario-goal"]');
-    this.scenarioFail = this.requireElement('[data-role="scenario-fail"]');
     this.characterStats = this.requireElement('[data-role="character-stats"]');
     this.eventPanel = this.requireElement('[data-panel="event"]');
     this.eventTitle = this.requireElement('[data-role="event-title"]');
@@ -1682,13 +1584,6 @@ export class GameLayout {
 
   private renderScenario(scenario: GameState['scenario']): void {
     this.scenarioTitle.textContent = scenario?.title ?? 'Сценарий';
-
-    this.scenarioIntroTitle.textContent = 'Журнал сценария';
-    this.scenarioIntroBody.innerHTML = '';
-
-    this.scenarioTaskSummary.textContent = '';
-    this.scenarioGoal.innerHTML = '';
-    this.scenarioFail.innerHTML = '';
   }
 
   private renderWorldTracks(tracks: GameState['worldTracks']): void {
