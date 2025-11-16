@@ -772,26 +772,12 @@ function ensureStyles() {
       box-shadow: inset 0 0 0 1px ${colors.panelGlassInnerHighlight};
     }
 
-    .woh-log-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.75rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: ${colors.logHeaderText};
-    }
-
-    .woh-log-status {
-      font-weight: 600;
-    }
-
     .woh-log-entries {
       overflow-y: auto;
       display: grid;
       gap: 10px;
       padding-right: 8px;
-      font-size: 0.78rem;
+      font-size: 0.82rem;
       line-height: 1.4;
       color: ${colors.logEntriesText};
       flex: 1;
@@ -808,15 +794,39 @@ function ensureStyles() {
       box-shadow: inset 0 0 0 1px ${colors.logEntryInset};
     }
 
+    .woh-log-entry[data-variant='story'] {
+      background: ${colors.logEntryVariants?.story?.background ?? colors.logEntryBackground};
+      border-color: ${colors.logEntryVariants?.story?.border ?? colors.logEntryBorder};
+      box-shadow:
+        inset 0 0 0 1px ${colors.logEntryInset},
+        0 0 14px ${colors.logEntryVariants?.story?.glow ?? colors.panelHighlight};
+    }
+
+    .woh-log-entry[data-variant='player'] {
+      background: ${colors.logEntryVariants?.player?.background ?? colors.logEntryBackground};
+      border-color: ${colors.logEntryVariants?.player?.border ?? colors.logEntryBorder};
+      box-shadow:
+        inset 0 0 0 1px ${colors.logEntryInset},
+        0 0 14px ${colors.logEntryVariants?.player?.glow ?? colors.panelHighlight};
+    }
+
+    .woh-log-entry[data-variant='effect'] {
+      background: ${colors.logEntryVariants?.effect?.background ?? colors.logEntryBackground};
+      border-color: ${colors.logEntryVariants?.effect?.border ?? colors.logEntryBorder};
+      box-shadow:
+        inset 0 0 0 1px ${colors.logEntryInset},
+        0 0 14px ${colors.logEntryVariants?.effect?.glow ?? colors.panelHighlight};
+    }
+
     .woh-log-entry-type {
-      font-size: 0.68rem;
+      font-size: 0.74rem;
       letter-spacing: 0.12em;
       text-transform: uppercase;
       color: ${colors.logEntryTypeText};
     }
 
     .woh-log-entry-body {
-      font-size: 0.8rem;
+      font-size: 0.88rem;
     }
 
     .woh-log-empty {
@@ -1091,12 +1101,6 @@ function ensureStyles() {
         padding: 14px;
       }
 
-      .woh-log-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 6px;
-      }
-
       .woh-log-entry {
         padding: 10px 12px;
       }
@@ -1187,10 +1191,6 @@ function ensureStyles() {
         font-size: 0.72rem;
       }
 
-      .woh-log-header {
-        gap: 4px;
-        width: 100%;
-      }
     }
   `;
 
@@ -1222,10 +1222,6 @@ const TEMPLATE = `
         <article class="woh-panel" data-panel="log">
           <h2 class="woh-panel-title">Журнал хода</h2>
           <div class="woh-log">
-            <div class="woh-log-header">
-              <span>Автопрокрутка</span>
-              <span class="woh-log-status" data-role="log-autoscroll">—</span>
-            </div>
             <div class="woh-log-entries" role="log" aria-live="polite" data-role="log-entries"></div>
           </div>
         </article>
@@ -1311,7 +1307,6 @@ export class GameLayout {
   private readonly eventChoices: HTMLElement;
   private readonly eventDeck: HTMLElement;
   private readonly logEntries: HTMLDivElement;
-  private readonly logAutoscroll: HTMLElement;
   private readonly soundToggle: HTMLButtonElement;
   private readonly newGameButton: HTMLButtonElement;
   private readonly settingsButton: HTMLButtonElement;
@@ -1395,7 +1390,6 @@ export class GameLayout {
     this.eventChoices = this.requireElement('[data-role="event-choices"]');
     this.eventDeck = this.requireElement('[data-role="event-deck"]');
     this.logEntries = this.requireElement<HTMLDivElement>('[data-role="log-entries"]');
-    this.logAutoscroll = this.requireElement('[data-role="log-autoscroll"]');
     this.soundToggle = this.requireElement<HTMLButtonElement>('[data-action="toggle-sound"]');
     this.newGameButton = this.requireElement<HTMLButtonElement>('[data-action="new-game"]');
     this.settingsButton = this.requireElement<HTMLButtonElement>('[data-action="settings"]');
@@ -1718,7 +1712,6 @@ export class GameLayout {
   }
 
   private renderLog(log: GameState['log'], autoScroll: boolean): void {
-    this.logAutoscroll.textContent = autoScroll ? 'Включена' : 'Выключена';
     this.logEntries.innerHTML = '';
 
     if (!log.length) {
@@ -1735,6 +1728,7 @@ export class GameLayout {
       const item = document.createElement('article');
       item.className = 'woh-log-entry';
       item.dataset.logId = entry.id;
+      item.dataset.variant = this.resolveLogVariant(entry.type);
 
       const type = document.createElement('span');
       type.className = 'woh-log-entry-type';
@@ -1764,6 +1758,27 @@ export class GameLayout {
   private updateSoundToggle(enabled: boolean): void {
     this.soundToggle.textContent = enabled ? '🔊' : '🔇';
     this.soundToggle.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+  }
+
+  private resolveLogVariant(typeLabel: string): 'story' | 'system' | 'effect' | 'player' {
+    const normalized = typeLabel.toLowerCase();
+    if (normalized.includes('действие')) {
+      return 'player';
+    }
+    if (
+      normalized.includes('npc') ||
+      normalized.includes('эффект') ||
+      normalized.includes('улик') ||
+      normalized.includes('разруш') ||
+      normalized.includes('штраф') ||
+      normalized.includes('ранен')
+    ) {
+      return 'effect';
+    }
+    if (normalized.includes('система') || normalized.includes('подсказ') || normalized.includes('тех')) {
+      return 'system';
+    }
+    return 'story';
   }
 
   private applyTooltip(element: HTMLElement, tooltip?: string): void {

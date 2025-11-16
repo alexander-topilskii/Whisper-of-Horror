@@ -128,6 +128,23 @@
     "logEntryBackground": "rgba(36, 38, 48, 0.8)",
     "logEntryBorder": "rgba(90, 96, 116, 0.4)",
     "logEntryInset": "rgba(12, 14, 20, 0.6)",
-    "logEntryTypeText": "rgba(160, 198, 189, 0.6)"
+    "logEntryTypeText": "rgba(160, 198, 189, 0.6)",
+    "logEntryVariants": {
+      "story": {
+        "background": "rgba(18, 46, 36, 0.92)",
+        "border": "rgba(90, 158, 126, 0.55)",
+        "glow": "rgba(64, 140, 105, 0.35)"
+      },
+      "player": {
+        "background": "rgba(20, 42, 70, 0.9)",
+        "border": "rgba(94, 152, 204, 0.55)",
+        "glow": "rgba(70, 140, 210, 0.35)"
+      },
+      "effect": {
+        "background": "rgba(58, 22, 30, 0.92)",
+        "border": "rgba(198, 92, 96, 0.6)",
+        "glow": "rgba(214, 102, 112, 0.35)"
+      }
+    }
   }
 }
