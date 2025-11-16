@@ -41,15 +41,24 @@ const initialState = {
   gameOutcome: null,
 } as GameState;
 
+function createShuffledDeck<T>(cards: T[] | undefined): T[] {
+  const deck = [...(cards ?? [])];
+  for (let index = deck.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [deck[index], deck[swapIndex]] = [deck[swapIndex], deck[index]];
+  }
+  return deck;
+}
+
 const playerDeckData = handCards.playerDeck ?? { hand: [], drawPile: [], discardPile: [] };
 initialState.hand = playerDeckData.hand ?? [];
-initialState.decks.player.drawPile = playerDeckData.drawPile ?? [];
+initialState.decks.player.drawPile = createShuffledDeck(playerDeckData.drawPile);
 initialState.decks.player.discardPile = playerDeckData.discardPile ?? [];
 initialState.decks.player.draw = initialState.decks.player.drawPile.length;
 initialState.decks.player.discard = initialState.decks.player.discardPile.length;
 
 const eventDeckData = eventCard.eventDeck ?? [];
-initialState.decks.event.drawPile = eventDeckData;
+initialState.decks.event.drawPile = createShuffledDeck(eventDeckData);
 initialState.decks.event.discardPile = [];
 initialState.decks.event.draw = eventDeckData.length;
 initialState.decks.event.discard = 0;
