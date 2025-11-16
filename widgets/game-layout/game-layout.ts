@@ -1887,7 +1887,8 @@ export class GameLayout {
       normalized.includes('система') ||
       normalized.includes('подсказ') ||
       normalized.includes('тех') ||
-      normalized.includes('ход')
+      normalized.includes('ход') ||
+      normalized.includes('колод')
     ) {
       return 'system';
     }
