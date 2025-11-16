@@ -7,6 +7,7 @@ import {
   ToggleSoundCommand,
 } from "../game-engine/game-engine";
 import type { GameState } from "../game-engine/game-engine";
+import { LogOverlayWidget } from "../log-overlay/log-overlay";
 
 const STYLE_TOKEN = "woh-game-layout-styles";
 
@@ -718,56 +719,6 @@ function ensureStyles() {
       color: rgba(166, 206, 210, 0.7);
     }
 
-    .woh-log {
-      border-top: 1px solid rgba(96, 140, 130, 0.18);
-      background: rgba(8, 18, 16, 0.92);
-      padding: 16px 32px 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      max-height: 25vh;
-    }
-
-    .woh-log-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.75rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: rgba(180, 222, 214, 0.75);
-    }
-
-    .woh-log-entries {
-      overflow-y: auto;
-      display: grid;
-      gap: 10px;
-      padding-right: 8px;
-      font-size: 0.78rem;
-      line-height: 1.4;
-      color: rgba(184, 210, 203, 0.78);
-    }
-
-    .woh-log-entry {
-      display: grid;
-      gap: 6px;
-      padding: 10px 14px;
-      border-radius: 12px;
-      background: rgba(18, 36, 32, 0.6);
-      border: 1px solid rgba(94, 146, 134, 0.22);
-    }
-
-    .woh-log-entry-type {
-      font-size: 0.68rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: rgba(160, 198, 189, 0.6);
-    }
-
-    .woh-log-entry-body {
-      font-size: 0.8rem;
-    }
-
     @media (max-width: 1100px) {
       .woh-main {
         grid-template-columns: 0.95fr 1.2fr 0.95fr;
@@ -796,9 +747,6 @@ function ensureStyles() {
         order: 3;
       }
 
-      .woh-log {
-        max-height: none;
-      }
     }
 
     @media (max-width: 720px) {
@@ -1217,13 +1165,6 @@ const TEMPLATE = `
         </article>
       </section>
     </div>
-    <footer class="woh-log">
-      <div class="woh-log-header">
-        <span>Журнал Хода</span>
-        <span data-role="log-autoscroll"></span>
-      </div>
-      <div class="woh-log-entries" aria-live="polite" data-role="log-entries"></div>
-    </footer>
   </div>
 `;
 
@@ -1248,12 +1189,10 @@ export class GameLayout {
   private readonly eventEffect: HTMLElement;
   private readonly eventChoices: HTMLElement;
   private readonly eventDeck: HTMLElement;
-  private readonly logAutoscroll: HTMLElement;
-  private readonly logEntries: HTMLElement;
   private readonly soundToggle: HTMLButtonElement;
   private readonly newGameButton: HTMLButtonElement;
   private readonly settingsButton: HTMLButtonElement;
-  private lastRenderedLogSize = 0;
+  private readonly logOverlay: LogOverlayWidget;
 
   private readonly handleRootCommand = (event: MouseEvent) => {
     if (!this.engine) {
@@ -1332,11 +1271,10 @@ export class GameLayout {
     this.eventEffect = this.requireElement('[data-role="event-effect"]');
     this.eventChoices = this.requireElement('[data-role="event-choices"]');
     this.eventDeck = this.requireElement('[data-role="event-deck"]');
-    this.logAutoscroll = this.requireElement('[data-role="log-autoscroll"]');
-    this.logEntries = this.requireElement('[data-role="log-entries"]');
     this.soundToggle = this.requireElement<HTMLButtonElement>('[data-action="toggle-sound"]');
     this.newGameButton = this.requireElement<HTMLButtonElement>('[data-action="new-game"]');
     this.settingsButton = this.requireElement<HTMLButtonElement>('[data-action="settings"]');
+    this.logOverlay = new LogOverlayWidget();
 
     this.enableTooltipToggles();
     this.enableTooltipPositioning();
@@ -1364,7 +1302,7 @@ export class GameLayout {
     this.renderWorldTracks(state.worldTracks);
     this.renderCharacterStats(state.characterStats);
     this.renderEvent(state.event, state.decks.event);
-    this.renderLog(state.log, state.autoScrollLog);
+    this.logOverlay.render(state.log, state.autoScrollLog);
     this.updateSoundToggle(state.soundEnabled);
   }
 
@@ -1635,34 +1573,6 @@ export class GameLayout {
     next.textContent = `Следующее: ${deck.next ?? 'скрыто'}`;
 
     this.eventDeck.append(draw, discard, next);
-  }
-
-  private renderLog(log: GameState['log'], autoScroll: boolean): void {
-    this.logEntries.innerHTML = '';
-    const fragment = document.createDocumentFragment();
-
-    log.forEach((entry) => {
-      const item = document.createElement('div');
-      item.className = 'woh-log-entry';
-
-      const type = document.createElement('span');
-      type.className = 'woh-log-entry-type';
-      type.textContent = entry.type;
-
-      const body = document.createElement('span');
-      body.className = 'woh-log-entry-body';
-      body.textContent = entry.body;
-
-      item.append(type, body);
-      fragment.append(item);
-    });
-
-    this.logEntries.append(fragment);
-    if (autoScroll && log.length !== this.lastRenderedLogSize) {
-      this.logEntries.scrollTo({ top: 0, behavior: this.lastRenderedLogSize ? 'smooth' : 'auto' });
-    }
-    this.lastRenderedLogSize = log.length;
-    this.logAutoscroll.textContent = autoScroll ? 'Автопрокрутка: Вкл.' : 'Автопрокрутка: Выкл.';
   }
 
   private updateSoundToggle(enabled: boolean): void {
