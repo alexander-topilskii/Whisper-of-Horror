@@ -1,3 +1,5 @@
+import { adjustActions, applyEventChoiceEffects, clamp, pushLogEntry } from "./effects/event-choice-effects";
+
 export interface ActionPoolState {
   remaining: number;
   total: number;
@@ -135,61 +137,12 @@ export interface GameCommand {
 
 export type GameStateListener = (state: GameState) => void;
 
-const LOG_LIMIT = 20;
-
 function cloneState<T>(value: T): T {
   if (typeof structuredClone === "function") {
     return structuredClone(value);
   }
 
   return JSON.parse(JSON.stringify(value)) as T;
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
-
-function generateLogId(): string {
-  return `log-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
-}
-
-function pushLogEntry(state: GameState, type: string, body: string) {
-  const entry: LogEntry = {
-    id: generateLogId(),
-    type,
-    body,
-  };
-
-  state.log = [entry, ...state.log].slice(0, LOG_LIMIT);
-}
-
-function applyStatDeltas(state: GameState, deltas: StatDelta[] | undefined) {
-  if (!deltas?.length) {
-    return;
-  }
-
-  deltas.forEach((delta) => {
-    const stat = state.characterStats.find((item) => item.id === delta.statId);
-    if (!stat) {
-      return;
-    }
-
-    stat.value = clamp(stat.value + delta.delta, 0, stat.max);
-  });
-}
-
-function adjustTrack(state: GameState, trackId: string, delta: number) {
-  const track = state.worldTracks.find((item) => item.id === trackId);
-  if (!track) {
-    return;
-  }
-
-  track.value = clamp(track.value + delta, 0, track.max);
-}
-
-function adjustActions(state: GameState, delta: number) {
-  const pool = state.turn.actions;
-  pool.remaining = clamp(pool.remaining + delta, 0, pool.total);
 }
 
 export class GameEngine {
@@ -301,25 +254,7 @@ export class ResolveEventChoiceCommand implements GameCommand {
 
     choice.resolved = true;
 
-    const logType = choice.effects?.logType ?? "[Событие]";
-    applyStatDeltas(state, choice.effects?.statDeltas);
-
-    if (choice.effects?.doomDelta) {
-      adjustTrack(state, "doom", choice.effects.doomDelta);
-    }
-
-    if (choice.effects?.victoryDelta) {
-      adjustTrack(state, "victory", choice.effects.victoryDelta);
-    }
-
-    if (choice.effects?.actionsDelta) {
-      adjustActions(state, choice.effects.actionsDelta);
-    }
-
-    if (choice.effects?.cluesGained) {
-      pushLogEntry(state, "[Улика]", `Получено улик: ${choice.effects.cluesGained}.`);
-    }
-
+    const logType = applyEventChoiceEffects(state, choice.effects);
     pushLogEntry(state, logType, choice.result);
     return state;
   }
