@@ -98,6 +98,7 @@ export interface EventCardState {
   title: string;
   flavor: string;
   effect: string;
+  type?: string;
   choices: EventChoiceState[];
 }
 

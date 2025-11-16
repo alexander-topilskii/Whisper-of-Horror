@@ -138,6 +138,46 @@ function ensureStyles() {
       box-shadow: inset 0 0 0 1px rgba(12, 38, 32, 0.2);
     }
 
+    .woh-panel--glass {
+      position: relative;
+      background: rgba(16, 16, 24, 0.85);
+      border: 1px solid rgba(230, 237, 255, 0.18);
+      box-shadow:
+        0 18px 45px rgba(1, 4, 15, 0.55),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .woh-panel--glass::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: var(
+        --woh-panel-accent,
+        linear-gradient(135deg, rgba(41, 121, 255, 0.35), rgba(144, 202, 249, 0.05))
+      );
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .woh-panel--glass > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .woh-panel--hand {
+      --woh-panel-accent: linear-gradient(135deg, rgba(41, 121, 255, 0.6), rgba(144, 202, 249, 0.05));
+    }
+
+    .woh-panel--events {
+      --woh-panel-accent: linear-gradient(135deg, rgba(41, 121, 255, 0.4), rgba(144, 202, 249, 0.05));
+    }
+
+    .woh-panel--events[data-event-tone='defeat'] {
+      --woh-panel-accent: linear-gradient(135deg, rgba(239, 68, 68, 0.55), rgba(248, 113, 113, 0.05));
+    }
+
     .woh-panel-title {
       font-family: "IM Fell English", "Times New Roman", serif;
       font-size: 0.98rem;
@@ -1104,7 +1144,7 @@ const TEMPLATE = `
             <div class="woh-deck-status" data-role="player-deck"></div>
           </div>
         </article>
-        <article class="woh-panel">
+        <article class="woh-panel woh-panel--glass woh-panel--hand" data-panel="hand">
           <h2 class="woh-panel-title">Рука</h2>
           <div class="woh-hand" role="list" data-role="hand"></div>
         </article>
@@ -1138,7 +1178,7 @@ const TEMPLATE = `
         </article>
       </section>
       <section class="woh-column woh-column--right">
-        <article class="woh-panel woh-event-card">
+        <article class="woh-panel woh-panel--glass woh-panel--events woh-event-card" data-panel="event">
           <h2 class="woh-panel-title">Текущее Событие</h2>
           <div class="woh-event-main">
             <div class="woh-event-title" data-role="event-title"></div>
@@ -1175,6 +1215,7 @@ export class GameLayout {
   private readonly npcList: HTMLElement;
   private readonly worldTracks: HTMLElement;
   private readonly characterStats: HTMLElement;
+  private readonly eventPanel: HTMLElement;
   private readonly eventTitle: HTMLElement;
   private readonly eventFlavor: HTMLElement;
   private readonly eventEffect: HTMLElement;
@@ -1258,6 +1299,7 @@ export class GameLayout {
     this.npcList = this.requireElement('[data-role="npc-list"]');
     this.worldTracks = this.requireElement('[data-role="world-tracks"]');
     this.characterStats = this.requireElement('[data-role="character-stats"]');
+    this.eventPanel = this.requireElement('[data-panel="event"]');
     this.eventTitle = this.requireElement('[data-role="event-title"]');
     this.eventFlavor = this.requireElement('[data-role="event-flavor"]');
     this.eventEffect = this.requireElement('[data-role="event-effect"]');
@@ -1528,6 +1570,7 @@ export class GameLayout {
   }
 
   private renderEvent(event: GameState['event'], deck: GameState['decks']['event']): void {
+    this.eventPanel.setAttribute('data-event-tone', event.type ?? 'mystery');
     this.eventTitle.textContent = event.title;
     this.eventFlavor.textContent = event.flavor;
     this.eventEffect.textContent = event.effect;
