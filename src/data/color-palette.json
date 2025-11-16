@@ -140,6 +140,11 @@
         "border": "rgba(94, 152, 204, 0.55)",
         "glow": "rgba(70, 140, 210, 0.35)"
       },
+      "system": {
+        "background": "rgba(32, 34, 40, 0.85)",
+        "border": "rgba(118, 124, 140, 0.55)",
+        "glow": "rgba(132, 138, 156, 0.35)"
+      },
       "effect": {
         "background": "rgba(58, 22, 30, 0.92)",
         "border": "rgba(198, 92, 96, 0.6)",
