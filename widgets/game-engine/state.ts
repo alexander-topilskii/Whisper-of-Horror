@@ -37,6 +37,14 @@ export interface CardDefinition {
   tooltip?: string;
   playable: boolean;
   effects?: EventChoiceEffect;
+  type?: string;
+  effect?: number;
+  chance?: number;
+  successCount?: number;
+  failCount?: number;
+  flavor?: string;
+  successText?: string;
+  failText?: string;
 }
 
 export interface StatusEffect {
