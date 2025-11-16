@@ -12,6 +12,9 @@ import palette from "../../src/data/color-palette.json";
 
 const STYLE_TOKEN = "woh-game-layout-styles";
 const colors = palette.gameLayout;
+type StatMeterPreset = { fill?: string; glow?: string };
+const statMeterPresets: Record<string, StatMeterPreset> =
+  (colors.statMeterPresets as Record<string, StatMeterPreset> | undefined) ?? {};
 
 function ensureStyles() {
   if (document.head.querySelector(`style[data-token="${STYLE_TOKEN}"]`)) {
@@ -464,7 +467,7 @@ function ensureStyles() {
       padding: 12px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
       position: relative;
       overflow: hidden;
     }
@@ -499,6 +502,25 @@ function ensureStyles() {
       font-size: 0.7rem;
       color: ${colors.statValueLabel};
       letter-spacing: 0.08em;
+    }
+
+    .woh-stat-meter {
+      position: relative;
+      height: 10px;
+      border-radius: 999px;
+      background: ${colors.statMeterBackground};
+      border: 1px solid ${colors.statMeterBorder};
+      box-shadow: inset 0 0 0 1px ${colors.statMeterInner};
+      overflow: hidden;
+    }
+
+    .woh-stat-meter-progress {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: var(--woh-stat-meter-fill, ${colors.statMeterDefaultFill});
+      box-shadow: 0 0 16px var(--woh-stat-meter-glow, ${colors.statMeterDefaultGlow});
+      transition: width 0.25s ease;
     }
 
     .woh-stat-card.is-critical {
@@ -1588,7 +1610,25 @@ export class GameLayout {
       max.textContent = `/ ${stat.max}`;
       value.append(max);
 
-      card.append(title, value);
+      const meter = document.createElement('div');
+      meter.className = 'woh-stat-meter';
+      const meterFill = document.createElement('div');
+      meterFill.className = 'woh-stat-meter-progress';
+      const ratio = stat.max > 0 ? stat.value / stat.max : 0;
+      const meterWidth = Math.max(0, Math.min(100, ratio * 100));
+      meterFill.style.width = `${meterWidth}%`;
+
+      const preset = statMeterPresets[stat.id] ?? statMeterPresets.default ?? null;
+      if (preset?.fill) {
+        meter.style.setProperty('--woh-stat-meter-fill', preset.fill);
+      }
+      if (preset?.glow) {
+        meter.style.setProperty('--woh-stat-meter-glow', preset.glow);
+      }
+
+      meter.append(meterFill);
+
+      card.append(title, value, meter);
       fragment.append(card);
     });
 
