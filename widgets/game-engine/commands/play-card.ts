@@ -62,6 +62,8 @@ export class PlayCardCommand implements GameCommand {
       if (card.effects) {
         logType = applyEventChoiceEffects(state, card.effects);
       }
+    } else if (card.failEffects) {
+      logType = applyEventChoiceEffects(state, card.failEffects);
     }
 
     const narrative = isSuccess
