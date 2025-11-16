@@ -51,6 +51,17 @@ const CARD_BEHAVIORS: Record<string, CardBehavior> = {
       return "[Здоровье]";
     },
   },
+  Поддержка: {
+    onSuccess: (state, card) => {
+      const relief = Math.abs(card.effect ?? 1);
+      adjustTrack(state, "doom", -relief);
+      return "[Поддержка]";
+    },
+    onFailure: (state) => {
+      adjustStat(state, "sanity", -1);
+      return "[Рассудок]";
+    },
+  },
 };
 
 export class PlayCardCommand implements GameCommand {
