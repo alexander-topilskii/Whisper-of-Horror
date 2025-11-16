@@ -826,6 +826,14 @@ function ensureStyles() {
         0 0 14px ${colors.logEntryVariants?.player?.glow ?? colors.panelHighlight};
     }
 
+    .woh-log-entry[data-variant='system'] {
+      background: ${colors.logEntryVariants?.system?.background ?? colors.logEntryBackground};
+      border-color: ${colors.logEntryVariants?.system?.border ?? colors.logEntryBorder};
+      box-shadow:
+        inset 0 0 0 1px ${colors.logEntryInset},
+        0 0 14px ${colors.logEntryVariants?.system?.glow ?? colors.panelHighlight};
+    }
+
     .woh-log-entry[data-variant='effect'] {
       background: ${colors.logEntryVariants?.effect?.background ?? colors.logEntryBackground};
       border-color: ${colors.logEntryVariants?.effect?.border ?? colors.logEntryBorder};
@@ -1813,7 +1821,7 @@ export class GameLayout {
       const item = document.createElement('article');
       item.className = 'woh-log-entry';
       item.dataset.logId = entry.id;
-      item.dataset.variant = this.resolveLogVariant(entry.type);
+      item.dataset.variant = this.resolveLogVariant(entry);
 
       const type = document.createElement('span');
       type.className = 'woh-log-entry-type';
@@ -1856,9 +1864,13 @@ export class GameLayout {
     this.soundToggle.setAttribute('aria-pressed', enabled ? 'true' : 'false');
   }
 
-  private resolveLogVariant(typeLabel: string): 'story' | 'system' | 'effect' | 'player' {
-    const normalized = typeLabel.toLowerCase();
-    if (normalized.includes('действие')) {
+  private resolveLogVariant(entry: GameState['log'][number]): 'story' | 'system' | 'effect' | 'player' {
+    if (this.isPlayerCardLogEntry(entry)) {
+      return 'player';
+    }
+
+    const normalized = entry.type.toLowerCase();
+    if (normalized.includes('действие') || normalized.includes('провал') || normalized.includes('успех')) {
       return 'player';
     }
     if (
@@ -1871,10 +1883,24 @@ export class GameLayout {
     ) {
       return 'effect';
     }
-    if (normalized.includes('система') || normalized.includes('подсказ') || normalized.includes('тех')) {
+    if (
+      normalized.includes('система') ||
+      normalized.includes('подсказ') ||
+      normalized.includes('тех') ||
+      normalized.includes('ход')
+    ) {
       return 'system';
     }
     return 'story';
+  }
+
+  private isPlayerCardLogEntry(entry: GameState['log'][number]): boolean {
+    const typeLabel = entry.type.toLowerCase();
+    if (typeLabel.includes('колода')) {
+      return false;
+    }
+
+    return entry.body.includes('Карта «');
   }
 
   private applyTooltip(element: HTMLElement, tooltip?: string): void {
