@@ -1681,40 +1681,35 @@ export class GameLayout {
   }
 
   private renderScenario(scenario: GameState['scenario']): void {
-    const panelTitle = scenario?.firstTask?.label ?? scenario?.title ?? 'Сценарий';
-    this.scenarioTitle.textContent = panelTitle;
+    this.scenarioTitle.textContent = scenario?.title ?? 'Сценарий';
 
-    const introTitle = scenario?.intro?.title ?? 'Пролог';
-    this.scenarioIntroTitle.textContent = introTitle;
+    this.scenarioIntroTitle.textContent = 'Журнал сценария';
     this.scenarioIntroBody.innerHTML = '';
-    const introLines = scenario?.intro?.flavor ?? [];
     const introFragment = document.createDocumentFragment();
-    if (introLines.length) {
-      introLines.forEach((line) => {
-        const item = document.createElement('li');
-        item.textContent = line;
-        introFragment.append(item);
-      });
-    } else {
-      const placeholder = document.createElement('li');
-      placeholder.textContent = 'Нет введения для этого акта.';
-      introFragment.append(placeholder);
-    }
+    const hints = [
+      'Пролог и активные задания перенесены в журнал хода.',
+      'Прокрутите журнал вверх, чтобы перечитать сюжет или цели.',
+    ];
+    hints.forEach((hint) => {
+      const item = document.createElement('li');
+      item.textContent = hint;
+      introFragment.append(item);
+    });
     this.scenarioIntroBody.append(introFragment);
 
-    this.scenarioTaskSummary.textContent = scenario?.firstTask?.summary ?? '';
+    this.scenarioTaskSummary.textContent = 'Актуальные цели доступны в журнале хода.';
 
     this.renderScenarioCondition(
       this.scenarioGoal,
       'Условия победы',
-      scenario?.firstTask?.goal ?? '',
-      scenario?.firstTask?.technicalGoal,
+      'Следите за журналом, чтобы видеть текущее требование победы.',
+      undefined,
     );
     this.renderScenarioCondition(
       this.scenarioFail,
       'Условия поражения',
-      scenario?.firstTask?.failCondition ?? '',
-      scenario?.firstTask?.technicalFailCondition,
+      'Журнал хода сообщает, когда угроза достигает критического значения.',
+      undefined,
     );
   }
 
@@ -1734,9 +1729,13 @@ export class GameLayout {
     const label = document.createElement('span');
     label.textContent = condition?.label ?? '—';
     const value = document.createElement('span');
-    const current = condition?.currentAmount ?? 0;
-    const required = condition?.requiredAmount ?? 0;
-    value.textContent = `${current} / ${required}`;
+    if (condition) {
+      const current = condition.currentAmount ?? 0;
+      const required = condition.requiredAmount ?? 0;
+      value.textContent = `${current} / ${required}`;
+    } else {
+      value.textContent = '—';
+    }
     progress.append(label, value);
 
     const descriptionElement = document.createElement('p');
