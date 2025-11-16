@@ -380,6 +380,21 @@ function ensureStyles() {
       gap: 12px;
     }
 
+    .woh-panel-section {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(102, 152, 141, 0.18);
+    }
+
+    .woh-subpanel-title {
+      font-family: "IM Fell English", "Times New Roman", serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      color: rgba(177, 217, 211, 0.78);
+    }
+
     .woh-stat-card {
       background: rgba(16, 34, 30, 0.6);
       border: 1px solid rgba(118, 166, 152, 0.32);
@@ -1093,6 +1108,12 @@ const TEMPLATE = `
           <h2 class="woh-panel-title">Рука</h2>
           <div class="woh-hand" role="list" data-role="hand"></div>
         </article>
+      </section>
+      <section class="woh-column woh-column--center">
+        <article class="woh-panel">
+          <h2 class="woh-panel-title">Треки Кампании</h2>
+          <div class="woh-world-tracks" data-role="world-tracks"></div>
+        </article>
         <article class="woh-panel">
           <h2 class="woh-panel-title">Фаза Мира</h2>
           <div class="woh-phase">
@@ -1104,22 +1125,16 @@ const TEMPLATE = `
           </div>
         </article>
         <article class="woh-panel">
-          <h2 class="woh-panel-title">Состояния</h2>
-          <div class="woh-effects" data-role="status-effects"></div>
-        </article>
-        <article class="woh-panel">
           <h2 class="woh-panel-title">Активные NPC</h2>
           <div class="woh-npc-row" data-role="npc-list"></div>
         </article>
-      </section>
-      <section class="woh-column woh-column--center">
         <article class="woh-panel">
-          <h2 class="woh-panel-title">Треки Кампании</h2>
-          <div class="woh-world-tracks" data-role="world-tracks"></div>
-        </article>
-        <article class="woh-panel">
-          <h2 class="woh-panel-title">Показатели</h2>
+          <h2 class="woh-panel-title">Показатели персонажа</h2>
           <div class="woh-character-stats" data-role="character-stats"></div>
+          <div class="woh-panel-section">
+            <h3 class="woh-subpanel-title">Состояния</h3>
+            <div class="woh-effects" data-role="status-effects"></div>
+          </div>
         </article>
       </section>
       <section class="woh-column woh-column--right">
