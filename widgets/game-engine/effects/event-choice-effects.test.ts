@@ -6,8 +6,8 @@ function createState(): GameState {
   return {
     turn: { number: 1, actions: { remaining: 3, total: 3 } },
     decks: {
-      player: { draw: 5, discard: 0 },
-      event: { draw: 5, discard: 0, next: null },
+      player: { draw: 5, discard: 0, drawPile: [], discardPile: [] },
+      event: { draw: 5, discard: 0, next: null, drawPile: [], discardPile: [] },
     },
     hand: [],
     phase: { icon: "", name: "", subtitle: "" },
@@ -18,7 +18,7 @@ function createState(): GameState {
     characterStats: [{ id: "will", label: "Will", value: 1, max: 6 }],
     statuses: [],
     npcs: [],
-    event: { title: "", flavor: "", effect: "", choices: [] },
+    event: { id: "test-event", title: "", flavor: "", effect: "", choices: [] },
     scenario: {
       actId: "test",
       title: "Test Scenario",
@@ -35,6 +35,10 @@ function createState(): GameState {
       },
     },
     log: [],
+    journalScript: { entries: [], nextIndex: 0, completed: true },
+    loopStage: "player",
+    eventResolutionPending: false,
+    gameOutcome: null,
     autoScrollLog: true,
     soundEnabled: true,
   };

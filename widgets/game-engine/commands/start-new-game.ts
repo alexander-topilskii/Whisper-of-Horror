@@ -9,9 +9,11 @@ export class StartNewGameCommand implements GameCommand {
 
   execute(_: GameState): GameState {
     const nextState = cloneState(this.snapshot);
-    nextState.turn.number = 1;
-    nextState.turn.actions.remaining = nextState.turn.actions.total;
-    pushLogEntry(nextState, "[Система]", "Начата новая партия. Следопыты делают первый вдох.");
+    pushLogEntry(
+      nextState,
+      "[Система]",
+      "Партия сброшена. Вернитесь к прологу и нажимайте «Далее».",
+    );
     return nextState;
   }
 }

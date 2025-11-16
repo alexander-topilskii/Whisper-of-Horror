@@ -11,12 +11,16 @@ export interface TurnState {
 export interface PlayerDeckState {
   draw: number;
   discard: number;
+  drawPile: CardDefinition[];
+  discardPile: CardDefinition[];
 }
 
 export interface EventDeckState {
   draw: number;
   discard: number;
   next: string | null;
+  drawPile: EventCardState[];
+  discardPile: EventCardState[];
 }
 
 export interface DeckCollectionState {
@@ -32,6 +36,7 @@ export interface CardDefinition {
   actionCost?: number;
   tooltip?: string;
   playable: boolean;
+  effects?: EventChoiceEffect;
 }
 
 export interface StatusEffect {
@@ -95,11 +100,13 @@ export interface EventChoiceState {
 }
 
 export interface EventCardState {
+  id: string;
   title: string;
   flavor: string;
   effect: string;
   type?: string;
-  choices: EventChoiceState[];
+  choices?: EventChoiceState[];
+  immediateEffects?: EventChoiceEffect;
 }
 
 export interface LogEntry {
@@ -139,6 +146,18 @@ export interface ScenarioState {
   firstTask: ScenarioTaskState;
 }
 
+export interface JournalScriptEntry {
+  id: string;
+  type: string;
+  body: string;
+}
+
+export interface JournalScriptState {
+  entries: JournalScriptEntry[];
+  nextIndex: number;
+  completed: boolean;
+}
+
 export interface GameState {
   turn: TurnState;
   decks: DeckCollectionState;
@@ -155,6 +174,10 @@ export interface GameState {
   event: EventCardState;
   scenario: ScenarioState;
   log: LogEntry[];
+  journalScript: JournalScriptState;
+  loopStage: "story" | "player" | "event" | "finished";
+  eventResolutionPending: boolean;
+  gameOutcome: "victory" | "defeat" | null;
   autoScrollLog: boolean;
   soundEnabled: boolean;
 }

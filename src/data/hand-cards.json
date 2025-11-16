@@ -1,31 +1,94 @@
 {
-  "hand": [
-    {
-      "id": "lantern",
-      "name": "Фонарик Сыщика",
-      "description": "Сделайте проверку наблюдательности. При успехе откройте дополнительную улику.",
-      "costs": ["1 действие", "1 рассудок"],
-      "actionCost": 1,
-      "tooltip": "Раскройте карту местности и откройте тайный проход.",
-      "playable": true
-    },
-    {
-      "id": "warding-ritual",
-      "name": "Оберегающий Ритуал",
-      "description": "Потратьте 2 действия, чтобы уменьшить трек разрушения на 1.",
-      "costs": ["2 действия"],
-      "actionCost": 2,
-      "tooltip": "Сложный ритуал, требующий тишины и концентрации.",
-      "playable": true
-    },
-    {
-      "id": "tattered-journal",
-      "name": "Потёртый Журнал",
-      "description": "Подсказка. Посмотрите верхнюю карту колоды событий.",
-      "costs": ["0 действий"],
-      "actionCost": 0,
-      "tooltip": "Исписанные страницы предупреждают о повторяющихся снах.",
-      "playable": false
-    }
-  ]
+  "playerDeck": {
+    "hand": [],
+    "drawPile": [
+      {
+        "id": "lantern",
+        "name": "Фонарик Сыщика",
+        "description": "Сделайте проверку наблюдательности. При успехе откройте дополнительную улику.",
+        "costs": ["1 действие", "1 рассудок"],
+        "actionCost": 1,
+        "tooltip": "Раскройте карту местности и откройте тайный проход.",
+        "playable": true,
+        "effects": {
+          "logType": "[Улика]",
+          "victoryDelta": 1
+        }
+      },
+      {
+        "id": "warding-ritual",
+        "name": "Оберегающий Ритуал",
+        "description": "Потратьте 2 действия, чтобы уменьшить трек разрушения на 1.",
+        "costs": ["2 действия"],
+        "actionCost": 2,
+        "tooltip": "Сложный ритуал, требующий тишины и концентрации.",
+        "playable": true,
+        "effects": {
+          "logType": "[Ритуал]",
+          "doomDelta": -1
+        }
+      },
+      {
+        "id": "tattered-journal",
+        "name": "Потёртый Журнал",
+        "description": "Вдохновляет: восстановите 1 рассудок и получите 1 действие.",
+        "costs": ["0 действий"],
+        "actionCost": 0,
+        "tooltip": "Исписанные страницы предупреждают о повторяющихся снах.",
+        "playable": true,
+        "effects": {
+          "logType": "[Поддержка]",
+          "statDeltas": [
+            { "statId": "sanity", "delta": 1 }
+          ],
+          "actionsDelta": 1
+        }
+      },
+      {
+        "id": "steel-nerves",
+        "name": "Стальные Нервы",
+        "description": "Соберитесь и уменьшите получаемый урон в этом ходу.",
+        "costs": ["1 действие"],
+        "actionCost": 1,
+        "tooltip": "Короткое дыхание и взгляд в темноту.",
+        "playable": true,
+        "effects": {
+          "logType": "[Защита]",
+          "statDeltas": [
+            { "statId": "health", "delta": 1 }
+          ]
+        }
+      },
+      {
+        "id": "shadow-step",
+        "name": "Шаг в Тень",
+        "description": "Манёвр: получите 2 дополнительных действия в этом ходу.",
+        "costs": ["1 действие"],
+        "actionCost": 1,
+        "tooltip": "Вдох — и вы уже за спиной врага.",
+        "playable": true,
+        "effects": {
+          "logType": "[Манёвр]",
+          "actionsDelta": 2
+        }
+      },
+      {
+        "id": "signal-flare",
+        "name": "Сигнальная Ракета",
+        "description": "Осветите крышу маяка и получите 1 улику.",
+        "costs": ["1 действие", "1 здоровье"],
+        "actionCost": 1,
+        "tooltip": "Слепящая вспышка привлекает внимание чего-то в тумане.",
+        "playable": true,
+        "effects": {
+          "logType": "[Улика]",
+          "victoryDelta": 1,
+          "statDeltas": [
+            { "statId": "health", "delta": -1 }
+          ]
+        }
+      }
+    ],
+    "discardPile": []
+  }
 }

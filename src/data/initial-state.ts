@@ -1,22 +1,65 @@
 import characterSettings from "./character-settings.json";
 import eventCard from "./event-card.json";
 import handCards from "./hand-cards.json";
+import journalScript from "./journal-script.json";
 import scenario from "./scenario.json";
 import worldSettings from "./world-settings.json";
-import type { GameState } from "../../widgets/game-engine/state";
+import type { GameState, JournalScriptEntry } from "../../widgets/game-engine/state";
 import { pushLogEntry } from "../../widgets/game-engine/state";
+
+const placeholderEvent: GameState["event"] = {
+  id: "no-event",
+  title: "Тишина перед бурей",
+  flavor: "Вы ещё только вслушиваетесь в шёпот Старого района.",
+  effect: "Дождитесь сигнала и нажмите «Далее», чтобы перейти к действиям.",
+  type: "mystery",
+  choices: [],
+};
 
 const initialState = {
   ...worldSettings,
   ...characterSettings,
-  ...handCards,
-  ...eventCard,
   ...scenario,
+  decks: {
+    ...worldSettings.decks,
+    player: {
+      ...worldSettings.decks?.player,
+      drawPile: [],
+      discardPile: [],
+    },
+    event: {
+      ...worldSettings.decks?.event,
+      drawPile: [],
+      discardPile: [],
+    },
+  },
+  hand: [],
+  event: placeholderEvent,
+  journalScript: { entries: [], nextIndex: 0, completed: false },
+  loopStage: "story",
+  eventResolutionPending: false,
+  gameOutcome: null,
 } as GameState;
+
+const playerDeckData = handCards.playerDeck ?? { hand: [], drawPile: [], discardPile: [] };
+initialState.hand = playerDeckData.hand ?? [];
+initialState.decks.player.drawPile = playerDeckData.drawPile ?? [];
+initialState.decks.player.discardPile = playerDeckData.discardPile ?? [];
+initialState.decks.player.draw = initialState.decks.player.drawPile.length;
+initialState.decks.player.discard = initialState.decks.player.discardPile.length;
+
+const eventDeckData = eventCard.eventDeck ?? [];
+initialState.decks.event.drawPile = eventDeckData;
+initialState.decks.event.discardPile = [];
+initialState.decks.event.draw = eventDeckData.length;
+initialState.decks.event.discard = 0;
+initialState.decks.event.next = eventDeckData[0]?.title ?? null;
 
 const firstTask = initialState.scenario?.firstTask;
 const goal = firstTask?.technicalGoal;
 const fail = firstTask?.technicalFailCondition;
+
+const tutorialEntries: JournalScriptEntry[] = [];
 
 function appendScenarioMessagesToLog(state: GameState) {
   const scenario = state.scenario;
@@ -28,7 +71,7 @@ function appendScenarioMessagesToLog(state: GameState) {
   if (intro?.flavor?.length) {
     const introType = `[Пролог] ${intro.title ?? scenario.title ?? "Сценарий"}`;
     const introBody = intro.flavor.join("\n\n");
-    pushLogEntry(state, introType, introBody);
+    tutorialEntries.push({ id: "scenario-intro", type: introType, body: introBody });
   }
 
   const task = scenario.firstTask;
@@ -41,11 +84,29 @@ function appendScenarioMessagesToLog(state: GameState) {
     if (task.failCondition) {
       summaryParts.push(`Провал: ${task.failCondition}`);
     }
-    pushLogEntry(state, taskType, summaryParts.filter(Boolean).join("\n"));
+    tutorialEntries.push({ id: task.id ?? "scenario-task", type: taskType, body: summaryParts.filter(Boolean).join("\n") });
   }
 }
 
 appendScenarioMessagesToLog(initialState);
+
+const technicalEntries = (journalScript.journalScript as JournalScriptEntry[] | undefined) ?? [];
+tutorialEntries.push(...technicalEntries);
+
+const firstEntry = tutorialEntries[0];
+if (firstEntry) {
+  pushLogEntry(initialState, firstEntry.type, firstEntry.body);
+}
+
+initialState.journalScript = {
+  entries: tutorialEntries,
+  nextIndex: firstEntry ? 1 : 0,
+  completed: tutorialEntries.length <= 1,
+};
+
+initialState.loopStage = initialState.journalScript.completed ? "player" : "story";
+initialState.eventResolutionPending = false;
+initialState.gameOutcome = null;
 
 initialState.worldTracks = [
   {

@@ -2,6 +2,8 @@ import { GameEngine } from "../game-engine/engine";
 import type { GameState } from "../game-engine/state";
 import {
   AppendLogEntryCommand,
+  AdvanceJournalCommand,
+  EndTurnCommand,
   PlayCardCommand,
   ResolveEventChoiceCommand,
   StartNewGameCommand,
@@ -105,6 +107,13 @@ function ensureStyles() {
       letter-spacing: 0.08em;
       cursor: pointer;
       transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .woh-button--ghost {
+      padding: 6px 12px;
+      font-size: 0.7rem;
+      background: transparent;
+      border-color: ${colors.buttonBorder};
     }
 
     .woh-button:hover,
@@ -723,6 +732,13 @@ function ensureStyles() {
       gap: 10px;
     }
 
+    .woh-event-empty {
+      margin: 0;
+      font-size: 0.78rem;
+      color: ${colors.eventFlavor};
+      font-style: italic;
+    }
+
     .woh-choice-button {
       border-radius: 12px;
       background: ${colors.choiceBackground};
@@ -1220,7 +1236,10 @@ const TEMPLATE = `
     <div class="woh-main">
       <section class="woh-column woh-column--log">
         <article class="woh-panel" data-panel="log">
-          <h2 class="woh-panel-title">Журнал хода</h2>
+          <div class="woh-panel-header">
+            <h2 class="woh-panel-title">Журнал хода</h2>
+            <button class="woh-button woh-button--ghost" type="button" data-action="advance-log">Далее</button>
+          </div>
           <div class="woh-log">
             <div class="woh-log-entries" role="log" aria-live="polite" data-role="log-entries"></div>
           </div>
@@ -1238,7 +1257,10 @@ const TEMPLATE = `
           </div>
         </article>
         <article class="woh-panel woh-panel--glass woh-panel--hand" data-panel="hand">
-          <h2 class="woh-panel-title">Рука</h2>
+          <div class="woh-panel-header">
+            <h2 class="woh-panel-title">Рука</h2>
+            <button class="woh-button woh-button--ghost" type="button" data-action="end-turn">Закончить ход</button>
+          </div>
           <div class="woh-hand" role="list" data-role="hand"></div>
         </article>
       </section>
@@ -1311,6 +1333,8 @@ export class GameLayout {
   private readonly soundToggle: HTMLButtonElement;
   private readonly newGameButton: HTMLButtonElement;
   private readonly settingsButton: HTMLButtonElement;
+  private readonly logAdvanceButton: HTMLButtonElement;
+  private readonly endTurnButton: HTMLButtonElement;
   private lastRenderedLogSize = 0;
 
   private readonly handleRootCommand = (event: MouseEvent) => {
@@ -1364,6 +1388,22 @@ export class GameLayout {
     this.engine.dispatch(new ToggleSoundCommand());
   };
 
+  private readonly handleAdvanceLogClick = () => {
+    if (!this.engine) {
+      return;
+    }
+
+    this.engine.dispatch(new AdvanceJournalCommand());
+  };
+
+  private readonly handleEndTurnClick = () => {
+    if (!this.engine) {
+      return;
+    }
+
+    this.engine.dispatch(new EndTurnCommand());
+  };
+
   constructor(root: HTMLElement) {
     if (!root) {
       throw new Error('GameLayout requires a valid root element');
@@ -1395,12 +1435,16 @@ export class GameLayout {
     this.soundToggle = this.requireElement<HTMLButtonElement>('[data-action="toggle-sound"]');
     this.newGameButton = this.requireElement<HTMLButtonElement>('[data-action="new-game"]');
     this.settingsButton = this.requireElement<HTMLButtonElement>('[data-action="settings"]');
+    this.logAdvanceButton = this.requireElement<HTMLButtonElement>('[data-action="advance-log"]');
+    this.endTurnButton = this.requireElement<HTMLButtonElement>('[data-action="end-turn"]');
 
     this.enableTooltipToggles();
     this.enableTooltipPositioning();
     this.newGameButton.addEventListener('click', this.handleNewGameClick);
     this.settingsButton.addEventListener('click', this.handleSettingsClick);
     this.soundToggle.addEventListener('click', this.handleSoundToggleClick);
+    this.logAdvanceButton.addEventListener('click', this.handleAdvanceLogClick);
+    this.endTurnButton.addEventListener('click', this.handleEndTurnClick);
     this.root.addEventListener('click', this.handleRootCommand);
   }
 
@@ -1422,9 +1466,11 @@ export class GameLayout {
     this.renderScenario(state.scenario);
     this.renderWorldTracks(state.worldTracks);
     this.renderCharacterStats(state.characterStats);
-    this.renderEvent(state.event, state.decks.event);
+    this.renderEvent(state);
     this.renderLog(state.log, state.autoScrollLog);
     this.updateSoundToggle(state.soundEnabled);
+    this.renderJournalControls(state.journalScript);
+    this.renderEndTurnButton(state);
   }
 
   private requireElement<T extends Element>(selector: string): T {
@@ -1678,17 +1724,38 @@ export class GameLayout {
     this.characterStats.append(fragment);
   }
 
-  private renderEvent(event: GameState['event'], deck: GameState['decks']['event']): void {
+  private renderEvent(state: GameState): void {
+    const event = state.event;
     this.eventPanel.setAttribute('data-event-tone', event.type ?? 'mystery');
     this.eventTitle.textContent = event.title;
     this.eventFlavor.textContent = event.flavor;
     this.eventEffect.textContent = event.effect;
-    this.renderEventChoices(event.choices);
-    this.renderEventDeck(deck);
+    this.renderEventChoices(event, state.loopStage, state.eventResolutionPending);
+    this.renderEventDeck(state.decks.event);
   }
 
-  private renderEventChoices(choices: GameState['event']['choices']): void {
+  private renderEventChoices(
+    event: GameState['event'],
+    loopStage: GameState['loopStage'],
+    awaitingChoice: boolean,
+  ): void {
     this.eventChoices.innerHTML = '';
+    const choices = event.choices ?? [];
+
+    if (!choices.length) {
+      const placeholder = document.createElement('p');
+      placeholder.className = 'woh-event-empty';
+      if (loopStage === 'event' && awaitingChoice) {
+        placeholder.textContent = 'Сделайте выбор, чтобы продолжить.';
+      } else if (loopStage === 'event') {
+        placeholder.textContent = 'Эффект разыгрывается автоматически.';
+      } else {
+        placeholder.textContent = 'Дождитесь конца хода, чтобы раскрыть новое событие.';
+      }
+      this.eventChoices.append(placeholder);
+      return;
+    }
+
     const fragment = document.createDocumentFragment();
 
     choices.forEach((choice) => {
@@ -1761,6 +1828,17 @@ export class GameLayout {
     }
 
     this.lastRenderedLogSize = log.length;
+  }
+
+  private renderJournalControls(script: GameState['journalScript']): void {
+    const hasNext = !script.completed && script.nextIndex < script.entries.length;
+    this.logAdvanceButton.disabled = !hasNext;
+  }
+
+  private renderEndTurnButton(state: GameState): void {
+    const disabled =
+      state.loopStage !== 'player' || !state.journalScript.completed || Boolean(state.gameOutcome);
+    this.endTurnButton.disabled = disabled;
   }
 
   private updateSoundToggle(enabled: boolean): void {

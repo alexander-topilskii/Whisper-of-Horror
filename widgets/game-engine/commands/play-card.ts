@@ -1,6 +1,7 @@
 import type { GameCommand, GameState } from "../state";
-import { clamp, pushLogEntry } from "../state";
-import { adjustActions } from "../effects/event-choice-effects";
+import { pushLogEntry } from "../state";
+import { adjustActions, applyEventChoiceEffects } from "../effects/event-choice-effects";
+import { syncPlayerDeckCounters } from "../effects/turn-cycle";
 
 export class PlayCardCommand implements GameCommand {
   public readonly type = "play-card";
@@ -8,6 +9,11 @@ export class PlayCardCommand implements GameCommand {
   constructor(private readonly cardId: string) {}
 
   execute(state: GameState): GameState {
+    if (state.loopStage !== "player" || state.gameOutcome) {
+      pushLogEntry(state, "[Система]", "Сейчас нельзя играть карты.");
+      return state;
+    }
+
     const cardIndex = state.hand.findIndex((card) => card.id === this.cardId);
     if (cardIndex === -1) {
       pushLogEntry(state, "[Система]", "Карты уже нет на руке.");
@@ -29,12 +35,11 @@ export class PlayCardCommand implements GameCommand {
     state.hand.splice(cardIndex, 1);
     adjustActions(state, -actionCost);
 
-    if (state.decks.player.draw > 0) {
-      state.decks.player.draw = clamp(state.decks.player.draw - 1, 0, Number.MAX_SAFE_INTEGER);
-    }
-    state.decks.player.discard += 1;
+    state.decks.player.discardPile.push(card);
+    syncPlayerDeckCounters(state);
 
-    pushLogEntry(state, "[Действие]", `Сыграна карта «${card.name}». ${card.description}`);
+    const logType = card.effects ? applyEventChoiceEffects(state, card.effects) : "[Действие]";
+    pushLogEntry(state, logType, `Сыграна карта «${card.name}». ${card.description}`);
     return state;
   }
 }
