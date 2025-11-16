@@ -7,7 +7,6 @@ import {
   ToggleSoundCommand,
 } from "../game-engine/game-engine";
 import type { GameState } from "../game-engine/game-engine";
-import { LogOverlayWidget } from "../log-overlay/log-overlay";
 import palette from "../../src/data/color-palette.json";
 
 const STYLE_TOKEN = "woh-game-layout-styles";
@@ -127,16 +126,25 @@ function ensureStyles() {
 
     .woh-main {
       display: grid;
-      grid-template-columns: 1fr 1.35fr 1fr;
+      grid-template-columns: 0.85fr 1fr 1.2fr 1fr;
       gap: 24px;
       padding: 24px 32px;
       overflow: hidden;
+      align-items: start;
     }
 
     .woh-column {
       display: flex;
       flex-direction: column;
       gap: 16px;
+      min-height: 0;
+    }
+
+    .woh-column--log .woh-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 100%;
     }
 
     .woh-panel {
@@ -730,13 +738,16 @@ function ensureStyles() {
     }
 
     .woh-log {
-      border-top: 1px solid ${colors.logBorder};
+      border: 1px solid ${colors.logBorder};
+      border-radius: 16px;
       background: ${colors.logBackground};
-      padding: 16px 32px 24px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
       gap: 12px;
-      max-height: 25vh;
+      flex: 1;
+      min-height: 0;
+      box-shadow: inset 0 0 0 1px ${colors.panelGlassInnerHighlight};
     }
 
     .woh-log-header {
@@ -749,6 +760,10 @@ function ensureStyles() {
       color: ${colors.logHeaderText};
     }
 
+    .woh-log-status {
+      font-weight: 600;
+    }
+
     .woh-log-entries {
       overflow-y: auto;
       display: grid;
@@ -757,6 +772,8 @@ function ensureStyles() {
       font-size: 0.78rem;
       line-height: 1.4;
       color: ${colors.logEntriesText};
+      flex: 1;
+      min-height: 0;
     }
 
     .woh-log-entry {
@@ -780,34 +797,43 @@ function ensureStyles() {
       font-size: 0.8rem;
     }
 
-    @media (max-width: 1100px) {
+    .woh-log-empty {
+      font-size: 0.78rem;
+      color: ${colors.logEntriesText};
+      opacity: 0.7;
+    }
+
+    @media (max-width: 1280px) {
       .woh-main {
-        grid-template-columns: 0.95fr 1.2fr 0.95fr;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .woh-column--log {
+        grid-column: 1 / -1;
       }
     }
 
     @media (max-width: 900px) {
       .woh-main {
         grid-template-columns: 1fr;
-        grid-template-rows: auto auto auto;
+        grid-template-rows: auto;
       }
 
-      .woh-column {
-        order: initial;
-      }
-
-      .woh-column--center {
+      .woh-column--log {
         order: 1;
       }
 
-      .woh-column--right {
+      .woh-column--left {
         order: 2;
       }
 
-      .woh-column--left {
+      .woh-column--center {
         order: 3;
       }
 
+      .woh-column--right {
+        order: 4;
+      }
     }
 
     @media (max-width: 720px) {
@@ -1170,6 +1196,18 @@ const TEMPLATE = `
       </div>
     </header>
     <div class="woh-main">
+      <section class="woh-column woh-column--log">
+        <article class="woh-panel" data-panel="log">
+          <h2 class="woh-panel-title">Журнал хода</h2>
+          <div class="woh-log">
+            <div class="woh-log-header">
+              <span>Автопрокрутка</span>
+              <span class="woh-log-status" data-role="log-autoscroll">—</span>
+            </div>
+            <div class="woh-log-entries" role="log" aria-live="polite" data-role="log-entries"></div>
+          </div>
+        </article>
+      </section>
       <section class="woh-column woh-column--left">
         <article class="woh-panel">
           <h2 class="woh-panel-title">Ресурсы Хода</h2>
@@ -1250,10 +1288,12 @@ export class GameLayout {
   private readonly eventEffect: HTMLElement;
   private readonly eventChoices: HTMLElement;
   private readonly eventDeck: HTMLElement;
+  private readonly logEntries: HTMLDivElement;
+  private readonly logAutoscroll: HTMLElement;
   private readonly soundToggle: HTMLButtonElement;
   private readonly newGameButton: HTMLButtonElement;
   private readonly settingsButton: HTMLButtonElement;
-  private readonly logOverlay: LogOverlayWidget;
+  private lastRenderedLogSize = 0;
 
   private readonly handleRootCommand = (event: MouseEvent) => {
     if (!this.engine) {
@@ -1332,10 +1372,11 @@ export class GameLayout {
     this.eventEffect = this.requireElement('[data-role="event-effect"]');
     this.eventChoices = this.requireElement('[data-role="event-choices"]');
     this.eventDeck = this.requireElement('[data-role="event-deck"]');
+    this.logEntries = this.requireElement<HTMLDivElement>('[data-role="log-entries"]');
+    this.logAutoscroll = this.requireElement('[data-role="log-autoscroll"]');
     this.soundToggle = this.requireElement<HTMLButtonElement>('[data-action="toggle-sound"]');
     this.newGameButton = this.requireElement<HTMLButtonElement>('[data-action="new-game"]');
     this.settingsButton = this.requireElement<HTMLButtonElement>('[data-action="settings"]');
-    this.logOverlay = new LogOverlayWidget();
 
     this.enableTooltipToggles();
     this.enableTooltipPositioning();
@@ -1363,7 +1404,7 @@ export class GameLayout {
     this.renderWorldTracks(state.worldTracks);
     this.renderCharacterStats(state.characterStats);
     this.renderEvent(state.event, state.decks.event);
-    this.logOverlay.render(state.log, state.autoScrollLog);
+    this.renderLog(state.log, state.autoScrollLog);
     this.updateSoundToggle(state.soundEnabled);
   }
 
@@ -1634,6 +1675,50 @@ export class GameLayout {
     next.textContent = `Следующее: ${deck.next ?? 'скрыто'}`;
 
     this.eventDeck.append(draw, discard, next);
+  }
+
+  private renderLog(log: GameState['log'], autoScroll: boolean): void {
+    this.logAutoscroll.textContent = autoScroll ? 'Включена' : 'Выключена';
+    this.logEntries.innerHTML = '';
+
+    if (!log.length) {
+      const empty = document.createElement('p');
+      empty.className = 'woh-log-empty';
+      empty.textContent = 'Журнал пуст';
+      this.logEntries.append(empty);
+      this.lastRenderedLogSize = 0;
+      return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    log.forEach((entry) => {
+      const item = document.createElement('article');
+      item.className = 'woh-log-entry';
+      item.dataset.logId = entry.id;
+
+      const type = document.createElement('span');
+      type.className = 'woh-log-entry-type';
+      type.textContent = entry.type;
+
+      const body = document.createElement('p');
+      body.className = 'woh-log-entry-body';
+      body.textContent = entry.body;
+
+      item.append(type, body);
+      fragment.append(item);
+    });
+
+    this.logEntries.append(fragment);
+
+    if (autoScroll && log.length !== this.lastRenderedLogSize) {
+      if (this.lastRenderedLogSize) {
+        this.logEntries.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        this.logEntries.scrollTop = 0;
+      }
+    }
+
+    this.lastRenderedLogSize = log.length;
   }
 
   private updateSoundToggle(enabled: boolean): void {
