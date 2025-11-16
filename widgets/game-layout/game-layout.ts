@@ -273,11 +273,11 @@ function ensureStyles() {
       position: relative;
     }
 
-    .woh-tooltip::after {
-      content: attr(data-tooltip);
+    .woh-tooltip-bubble {
       position: absolute;
-      inset: auto 50% calc(100% + 8px) auto;
-      transform: translateX(-50%) scale(var(--tooltip-scale, 0.9));
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(calc(-50% + var(--tooltip-shift, 0px))) scale(var(--tooltip-scale, 0.9));
       transform-origin: bottom center;
       background: rgba(10, 26, 23, 0.95);
       border: 1px solid rgba(104, 175, 160, 0.45);
@@ -293,9 +293,15 @@ function ensureStyles() {
       white-space: normal;
     }
 
-    .woh-tooltip:hover::after,
-    .woh-tooltip:focus-visible::after,
-    .woh-tooltip[data-expanded="true"]::after {
+    .woh-tooltip[data-tooltip-placement="bottom"] .woh-tooltip-bubble {
+      bottom: auto;
+      top: calc(100% + 8px);
+      transform-origin: top center;
+    }
+
+    .woh-tooltip:hover .woh-tooltip-bubble,
+    .woh-tooltip:focus-visible .woh-tooltip-bubble,
+    .woh-tooltip[data-expanded="true"] .woh-tooltip-bubble {
       opacity: 1;
       --tooltip-scale: 1;
     }
@@ -1249,6 +1255,7 @@ export class GameLayout {
     this.settingsButton = this.requireElement<HTMLButtonElement>('[data-action="settings"]');
 
     this.enableTooltipToggles();
+    this.enableTooltipPositioning();
     this.newGameButton.addEventListener('click', this.handleNewGameClick);
     this.settingsButton.addEventListener('click', this.handleSettingsClick);
     this.soundToggle.addEventListener('click', this.handleSoundToggleClick);
@@ -1583,12 +1590,25 @@ export class GameLayout {
       element.classList.remove('woh-tooltip');
       element.removeAttribute('data-tooltip');
       element.removeAttribute('data-expanded');
+      element.removeAttribute('data-tooltip-placement');
+      element.querySelector('.woh-tooltip-bubble')?.remove();
       return;
     }
 
     element.classList.add('woh-tooltip');
     element.setAttribute('data-tooltip', tooltip);
     element.setAttribute('data-expanded', 'false');
+
+    let bubble = element.querySelector<HTMLSpanElement>('.woh-tooltip-bubble');
+    if (!bubble) {
+      bubble = document.createElement('span');
+      bubble.className = 'woh-tooltip-bubble';
+      bubble.setAttribute('role', 'tooltip');
+      bubble.setAttribute('aria-hidden', 'true');
+      element.append(bubble);
+    }
+    bubble.textContent = tooltip;
+    this.updateTooltipPosition(element);
   }
 
   private enableTooltipToggles(): void {
@@ -1605,6 +1625,9 @@ export class GameLayout {
         }
       });
       target.setAttribute('data-expanded', String(!isExpanded));
+      if (!isExpanded) {
+        this.updateTooltipPosition(target);
+      }
     });
 
     this.root.addEventListener('keydown', (event) => {
@@ -1620,6 +1643,60 @@ export class GameLayout {
       event.preventDefault();
       target.click();
     });
+  }
+
+  private enableTooltipPositioning(): void {
+    const updateFromEvent = (event: Event) => {
+      const target = (event.target as HTMLElement | null)?.closest<HTMLElement>('.woh-tooltip');
+      if (!target || !this.root.contains(target)) {
+        return;
+      }
+      this.updateTooltipPosition(target);
+    };
+
+    this.root.addEventListener('pointerenter', updateFromEvent, true);
+    this.root.addEventListener('focusin', updateFromEvent);
+    window.addEventListener('resize', this.handleTooltipResize);
+  }
+
+  private readonly handleTooltipResize = () => {
+    this.root.querySelectorAll<HTMLElement>('.woh-tooltip[data-expanded="true"]').forEach((element) => {
+      this.updateTooltipPosition(element);
+    });
+  };
+
+  private updateTooltipPosition(element: HTMLElement): void {
+    const bubble = element.querySelector<HTMLElement>('.woh-tooltip-bubble');
+    if (!bubble) {
+      return;
+    }
+
+    const viewportPadding = 12;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const bubbleRect = bubble.getBoundingClientRect();
+    const hostRect = element.getBoundingClientRect();
+
+    let horizontalShift = 0;
+    if (bubbleRect.left < viewportPadding) {
+      horizontalShift = viewportPadding - bubbleRect.left;
+    } else if (bubbleRect.right > viewportWidth - viewportPadding) {
+      horizontalShift = (viewportWidth - viewportPadding) - bubbleRect.right;
+    }
+    bubble.style.setProperty('--tooltip-shift', `${horizontalShift}px`);
+
+    const spaceAbove = hostRect.top;
+    const spaceBelow = viewportHeight - hostRect.bottom;
+    const bubbleHeight = bubbleRect.height + 16;
+    let placement: 'top' | 'bottom' = 'top';
+
+    if (bubbleHeight > spaceAbove && spaceBelow > spaceAbove) {
+      placement = 'bottom';
+    } else if (bubbleHeight > spaceBelow && spaceAbove > spaceBelow) {
+      placement = 'top';
+    }
+
+    element.setAttribute('data-tooltip-placement', placement);
   }
 }
 
