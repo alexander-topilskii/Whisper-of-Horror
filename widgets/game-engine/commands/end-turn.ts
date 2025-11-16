@@ -1,6 +1,22 @@
 import type { GameCommand, GameState } from "../state";
 import { pushLogEntry } from "../state";
-import { beginEventPhase, resolveImmediateEvent, startPlayerTurn } from "../effects/turn-cycle";
+import {
+  beginEventPhase,
+  resolveImmediateEvent,
+  startPlayerTurn,
+  syncPlayerDeckCounters,
+} from "../effects/turn-cycle";
+
+function discardRemainingHand(state: GameState): void {
+  if (!state.hand.length) {
+    return;
+  }
+
+  const discarded = state.hand.splice(0);
+  state.decks.player.discardPile.push(...discarded);
+  syncPlayerDeckCounters(state);
+  pushLogEntry(state, "[Колода]", `Вы сбрасываете ${discarded.length} карт(ы).`);
+}
 
 export class EndTurnCommand implements GameCommand {
   public readonly type = "end-turn";
@@ -21,6 +37,7 @@ export class EndTurnCommand implements GameCommand {
       return state;
     }
 
+    discardRemainingHand(state);
     const event = beginEventPhase(state);
     if (!event) {
       pushLogEntry(state, "[Событие]", "Событий не осталось. Вы пережидаете туман.");
