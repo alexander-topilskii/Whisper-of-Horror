@@ -56,6 +56,10 @@ function ensureStyles() {
       overflow-x: hidden;
     }
 
+    .is-hidden {
+      display: none !important;
+    }
+
     .woh-game-layout {
       display: grid;
       grid-template-rows: auto 1fr auto;
@@ -173,6 +177,8 @@ function ensureStyles() {
       border-radius: 16px;
       padding: 16px;
       box-shadow: inset 0 0 0 1px ${colors.panelInsetShadow};
+      position: relative;
+      z-index: 0;
     }
 
     .woh-panel--glass {
@@ -198,6 +204,37 @@ function ensureStyles() {
     .woh-panel--glass > * {
       position: relative;
       z-index: 1;
+    }
+
+    .woh-panel--pulse-journal,
+    .woh-panel--pulse-hand,
+    .woh-panel--pulse-event {
+      position: relative;
+      z-index: 0;
+    }
+
+    .woh-panel--pulse-journal::after,
+    .woh-panel--pulse-hand::after,
+    .woh-panel--pulse-event::after {
+      content: "";
+      position: absolute;
+      inset: -6px;
+      border-radius: inherit;
+      pointer-events: none;
+      opacity: 0;
+      z-index: -1;
+    }
+
+    .woh-panel--pulse-journal::after {
+      animation: woh-panel-journal-pulse 4.6s ease-in-out infinite;
+    }
+
+    .woh-panel--pulse-hand::after {
+      animation: woh-panel-hand-pulse 4.2s ease-in-out infinite;
+    }
+
+    .woh-panel--pulse-event::after {
+      animation: woh-panel-event-pulse 4.2s ease-in-out infinite;
     }
 
     .woh-panel--hand {
@@ -658,6 +695,42 @@ function ensureStyles() {
       100% {
         opacity: 0;
         transform: translate(calc(-50% + var(--particle-x)), calc(-50% + var(--particle-y))) scale(0.35);
+      }
+    }
+
+    @keyframes woh-panel-journal-pulse {
+      0%,
+      100% {
+        opacity: 0;
+        box-shadow: 0 0 0 0 ${colors.panelPulseJournalInner}, 0 0 0 0 ${colors.panelPulseJournalOuter};
+      }
+      50% {
+        opacity: 1;
+        box-shadow: 0 0 12px 3px ${colors.panelPulseJournalInner}, 0 0 52px 12px ${colors.panelPulseJournalOuter};
+      }
+    }
+
+    @keyframes woh-panel-hand-pulse {
+      0%,
+      100% {
+        opacity: 0;
+        box-shadow: 0 0 0 0 ${colors.panelPulseHandInner}, 0 0 0 0 ${colors.panelPulseHandOuter};
+      }
+      50% {
+        opacity: 1;
+        box-shadow: 0 0 10px 2px ${colors.panelPulseHandInner}, 0 0 40px 10px ${colors.panelPulseHandOuter};
+      }
+    }
+
+    @keyframes woh-panel-event-pulse {
+      0%,
+      100% {
+        opacity: 0;
+        box-shadow: 0 0 0 0 ${colors.panelPulseEventInner}, 0 0 0 0 ${colors.panelPulseEventOuter};
+      }
+      50% {
+        opacity: 1;
+        box-shadow: 0 0 10px 2px ${colors.panelPulseEventInner}, 0 0 42px 10px ${colors.panelPulseEventOuter};
       }
     }
 
@@ -1408,7 +1481,7 @@ const TEMPLATE = `
       </section>
       <section class="woh-column woh-column--right">
         <article class="woh-panel woh-panel--glass woh-panel--events woh-event-card" data-panel="event">
-          <h2 class="woh-panel-title">Текущее Событие</h2>
+          <h2 class="woh-panel-title">События</h2>
           <div class="woh-event-main">
             <div class="woh-event-title" data-role="event-title"></div>
             <div class="woh-event-flavor" data-role="event-flavor"></div>
@@ -1438,6 +1511,8 @@ export class GameLayout {
   private readonly worldTracks: HTMLElement;
   private readonly scenarioTitle: HTMLElement;
   private readonly characterStats: HTMLElement;
+  private readonly logPanel: HTMLElement;
+  private readonly handPanel: HTMLElement;
   private readonly eventPanel: HTMLElement;
   private readonly eventTitle: HTMLElement;
   private readonly eventFlavor: HTMLElement;
@@ -1543,6 +1618,8 @@ export class GameLayout {
     this.worldTracks = this.requireElement('[data-role="world-tracks"]');
     this.scenarioTitle = this.requireElement('[data-role="scenario-title"]');
     this.characterStats = this.requireElement('[data-role="character-stats"]');
+    this.logPanel = this.requireElement('[data-panel="log"]');
+    this.handPanel = this.requireElement('[data-panel="hand"]');
     this.eventPanel = this.requireElement('[data-panel="event"]');
     this.eventTitle = this.requireElement('[data-role="event-title"]');
     this.eventFlavor = this.requireElement('[data-role="event-flavor"]');
@@ -1589,6 +1666,7 @@ export class GameLayout {
     this.updateSoundToggle(state.soundEnabled);
     this.renderJournalControls(state.journalScript);
     this.renderEndTurnButton(state);
+    this.updateGuidanceHighlights(state);
   }
 
   private requireElement<T extends Element>(selector: string): T {
@@ -2041,14 +2119,32 @@ export class GameLayout {
   }
 
   private renderJournalControls(script: GameState['journalScript']): void {
-    const hasNext = !script.completed && script.nextIndex < script.entries.length;
+    const hasNext = this.hasPendingJournalEntry(script);
     this.logAdvanceButton.disabled = !hasNext;
+    this.logAdvanceButton.classList.toggle('is-hidden', !hasNext);
   }
 
   private renderEndTurnButton(state: GameState): void {
+    const introActive = state.loopStage === 'story' && this.hasPendingJournalEntry(state.journalScript);
+    this.endTurnButton.classList.toggle('is-hidden', introActive);
     const disabled =
       state.loopStage !== 'player' || !state.journalScript.completed || Boolean(state.gameOutcome);
     this.endTurnButton.disabled = disabled;
+  }
+
+  private hasPendingJournalEntry(script: GameState['journalScript']): boolean {
+    return !script.completed && script.nextIndex < script.entries.length;
+  }
+
+  private updateGuidanceHighlights(state: GameState): void {
+    const needsJournal = state.loopStage === 'story' && this.hasPendingJournalEntry(state.journalScript);
+    this.logPanel.classList.toggle('woh-panel--pulse-journal', needsJournal);
+
+    const playerPhaseActive = state.loopStage === 'player' && !state.gameOutcome;
+    this.handPanel.classList.toggle('woh-panel--pulse-hand', playerPhaseActive);
+
+    const eventPhaseActive = state.loopStage === 'event' && !state.gameOutcome;
+    this.eventPanel.classList.toggle('woh-panel--pulse-event', eventPhaseActive);
   }
 
   private updateSoundToggle(enabled: boolean): void {
