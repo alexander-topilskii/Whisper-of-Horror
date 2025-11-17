@@ -97,6 +97,7 @@ export function startPlayerTurn(state: GameState): void {
   decayCardModifiers(state);
   state.loopStage = "player";
   state.eventResolutionPending = false;
+  state.eventResolutionSummary = null;
   state.turn.number += 1;
   state.turn.actions.remaining = state.turn.actions.total;
   applyActionPenaltiesFromMarkers(state);
@@ -138,6 +139,7 @@ export function beginEventPhase(state: GameState): EventCardState | null {
   state.event = nextEvent;
   state.loopStage = "event";
   state.eventResolutionPending = Boolean(nextEvent.choices?.length);
+  state.eventResolutionSummary = null;
   state.turn.actions.remaining = 0;
   state.phase.icon = "☄️";
   state.phase.name = "Фаза событий";
@@ -181,6 +183,7 @@ export function completeEventPhase(state: GameState): void {
   state.decks.event.discardPile.push(resolvedEvent);
   syncEventDeckCounters(state);
   state.eventResolutionPending = false;
+  state.eventResolutionSummary = null;
 
   const outcome = evaluateOutcome(state);
   if (outcome) {
@@ -195,6 +198,9 @@ export function completeEventPhase(state: GameState): void {
 
 export function resolveImmediateEvent(state: GameState, event: EventCardState): void {
   const { type: logType, variant: logVariant } = applyEventChoiceEffects(state, event.immediateEffects);
-  pushLogEntry(state, logType, event.effect, logVariant ?? "story");
-  completeEventPhase(state);
+  const title = logType ?? "[Событие]";
+  const body = event.effect;
+  pushLogEntry(state, title, body, logVariant ?? "story");
+  state.eventResolutionPending = false;
+  state.eventResolutionSummary = { title, body, variant: logVariant ?? "story" };
 }

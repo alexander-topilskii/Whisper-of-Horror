@@ -1,7 +1,6 @@
-import type { GameCommand, GameState } from "../state";
+import type { GameCommand, GameState, LogEntryVariant } from "../state";
 import { pushLogEntry } from "../state";
 import { applyEventChoiceEffects } from "../effects/event-choice-effects";
-import { completeEventPhase } from "../effects/turn-cycle";
 
 export class ResolveEventChoiceCommand implements GameCommand {
   public readonly type = "resolve-event-choice";
@@ -33,6 +32,10 @@ export class ResolveEventChoiceCommand implements GameCommand {
 
     choice.resolved = true;
 
+    let summaryTitle = "[Событие]";
+    let summaryBody = choice.result ?? "Эффект завершён.";
+    let summaryVariant: LogEntryVariant = "story";
+
     if (typeof choice.chance === "number") {
       const chance = Math.max(0, Math.min(1, choice.chance));
       const roll = Math.random();
@@ -48,14 +51,24 @@ export class ResolveEventChoiceCommand implements GameCommand {
         : choice.failText ?? fallbackResult;
       const { type: logType, variant: logVariant } = applyEventChoiceEffects(state, effects);
       const chanceSuffix = ` Шанс ${Math.round(chance * 100)}%, результат: ${success ? "успех" : "провал"}.`;
-      pushLogEntry(state, logType, `${narrative}${chanceSuffix}`.trim(), logVariant ?? "story");
+      summaryTitle = logType ?? "[Событие]";
+      summaryVariant = logVariant ?? "story";
+      summaryBody = `${narrative}${chanceSuffix}`.trim();
+      pushLogEntry(state, summaryTitle, summaryBody, summaryVariant);
     } else {
       const { type: logType, variant: logVariant } = applyEventChoiceEffects(state, choice.effects);
-      pushLogEntry(state, logType, choice.result ?? "Эффект завершён.", logVariant ?? "story");
+      summaryTitle = logType ?? "[Событие]";
+      summaryVariant = logVariant ?? "story";
+      summaryBody = choice.result ?? "Эффект завершён.";
+      pushLogEntry(state, summaryTitle, summaryBody, summaryVariant);
     }
 
     state.eventResolutionPending = false;
-    completeEventPhase(state);
+    state.eventResolutionSummary = {
+      title: summaryTitle,
+      body: summaryBody,
+      variant: summaryVariant,
+    };
     return state;
   }
 }

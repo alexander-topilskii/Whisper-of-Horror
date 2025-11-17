@@ -123,6 +123,7 @@ initialState.journalScript = {
 
 initialState.loopStage = initialState.journalScript.completed ? "player" : "story";
 initialState.eventResolutionPending = false;
+initialState.eventResolutionSummary = null;
 initialState.gameOutcome = null;
 
 initialState.worldTracks = [
