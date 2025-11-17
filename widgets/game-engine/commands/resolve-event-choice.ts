@@ -54,11 +54,8 @@ export class ResolveEventChoiceCommand implements GameCommand {
       pushLogEntry(state, logType, choice.result ?? "Эффект завершён.", logVariant ?? "story");
     }
 
-    const unresolved = choices.some((item) => !item.resolved);
-    state.eventResolutionPending = unresolved;
-    if (!unresolved) {
-      completeEventPhase(state);
-    }
+    state.eventResolutionPending = false;
+    completeEventPhase(state);
     return state;
   }
 }

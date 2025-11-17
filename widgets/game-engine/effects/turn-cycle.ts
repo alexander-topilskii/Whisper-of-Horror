@@ -1,6 +1,7 @@
 import type { EventCardState, GameState } from "../state";
 import { pushLogEntry } from "../state";
 import { applyEventChoiceEffects } from "./event-choice-effects";
+import { createEventPlaceholder } from "../../../src/data/event-placeholder";
 
 function shuffleInPlace<T>(items: T[]): void {
   for (let index = items.length - 1; index > 0; index -= 1) {
@@ -155,16 +156,19 @@ function evaluateOutcome(state: GameState): "victory" | "defeat" | null {
 }
 
 export function completeEventPhase(state: GameState): void {
-  state.decks.event.discardPile.push(state.event);
+  const resolvedEvent = state.event;
+  state.decks.event.discardPile.push(resolvedEvent);
   syncEventDeckCounters(state);
   state.eventResolutionPending = false;
 
   const outcome = evaluateOutcome(state);
   if (outcome) {
     state.turn.actions.remaining = 0;
+    state.event = createEventPlaceholder();
     return;
   }
 
+  state.event = createEventPlaceholder();
   startPlayerTurn(state);
 }
 

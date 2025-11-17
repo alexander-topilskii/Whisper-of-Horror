@@ -7,15 +7,7 @@ import worldSettings from "./world-settings.json";
 import type { GameState, JournalScriptEntry } from "../../widgets/game-engine/state";
 import { pushLogEntry } from "../../widgets/game-engine/state";
 import { normalizeEventDeck, type RawEventCard } from "./normalize-event-cards";
-
-const placeholderEvent: GameState["event"] = {
-  id: "no-event",
-  title: "Тишина перед бурей",
-  flavor: "Вы ещё только вслушиваетесь в шёпот Старого района.",
-  effect: "Дождитесь сигнала и нажмите «Далее», чтобы перейти к действиям.",
-  type: "mystery",
-  choices: [],
-};
+import { createEventPlaceholder } from "./event-placeholder";
 
 const initialState = {
   ...worldSettings,
@@ -35,7 +27,7 @@ const initialState = {
     },
   },
   hand: [],
-  event: placeholderEvent,
+  event: createEventPlaceholder(),
   journalScript: { entries: [], nextIndex: 0, completed: false },
   loopStage: "story",
   eventResolutionPending: false,
