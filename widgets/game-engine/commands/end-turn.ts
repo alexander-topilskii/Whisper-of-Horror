@@ -6,6 +6,7 @@ import {
   startPlayerTurn,
   syncPlayerDeckCounters,
 } from "../effects/turn-cycle";
+import { decayTemporaryMarkers } from "../effects/temporary-markers";
 
 function discardRemainingHand(state: GameState): void {
   if (!state.hand.length) {
@@ -38,6 +39,7 @@ export class EndTurnCommand implements GameCommand {
     }
 
     discardRemainingHand(state);
+    decayTemporaryMarkers(state);
     const event = beginEventPhase(state);
     if (!event) {
       pushLogEntry(state, "[Событие]", "Событий не осталось. Вы пережидаете туман.", "system");

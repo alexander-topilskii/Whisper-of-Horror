@@ -26,6 +26,7 @@ function createEventState(): GameState {
     ],
     characterStats: [{ id: "sanity", label: "Рассудок", value: 3, max: 5 }],
     statuses: [],
+    temporaryMarkers: [],
     npcs: [],
     event: {
       id: "test", title: "Test", flavor: "", effect: "",

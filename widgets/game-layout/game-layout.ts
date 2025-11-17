@@ -1661,7 +1661,7 @@ export class GameLayout {
     this.renderPlayerDeck(state.decks);
     this.renderHand(state.hand);
     this.renderPhase(state.phase);
-    this.renderStatuses(state.statuses);
+    this.renderStatuses(state.statuses, state.temporaryMarkers);
     this.renderNpcs(state.npcs);
     this.renderScenario(state.scenario);
     this.renderWorldTracks(state.worldTracks);
@@ -1773,7 +1773,10 @@ export class GameLayout {
     this.phaseSubtitle.textContent = phase.subtitle;
   }
 
-  private renderStatuses(statuses: GameState['statuses']): void {
+  private renderStatuses(
+    statuses: GameState['statuses'],
+    markers: GameState['temporaryMarkers'],
+  ): void {
     this.statusEffects.innerHTML = '';
     const fragment = document.createDocumentFragment();
 
@@ -1786,6 +1789,19 @@ export class GameLayout {
       this.applyTooltip(button, status.description);
       fragment.append(button);
     });
+
+    markers
+      .filter((marker) => marker.value > 0)
+      .forEach((marker) => {
+        const button = document.createElement('button');
+        button.className = 'woh-effect-chip';
+        button.type = 'button';
+        button.textContent = `${marker.label} ×${marker.value}`;
+        button.dataset.tone = marker.tone;
+        button.dataset.marker = marker.id;
+        this.applyTooltip(button, marker.description);
+        fragment.append(button);
+      });
 
     this.statusEffects.append(fragment);
   }
