@@ -16,6 +16,7 @@ const colors = palette.gameLayout;
 type StatMeterPreset = { fill?: string; glow?: string };
 const statMeterPresets: Record<string, StatMeterPreset> =
   (colors.statMeterPresets as Record<string, StatMeterPreset> | undefined) ?? {};
+type StatChangeVariant = 'heal' | 'damage';
 
 function ensureStyles() {
   if (document.head.querySelector(`style[data-token="${STYLE_TOKEN}"]`)) {
@@ -33,6 +34,13 @@ function ensureStyles() {
       --woh-panel-border: ${colors.panelBorder};
       --woh-panel-border-strong: ${colors.panelBorderStrong};
       --woh-panel-highlight: ${colors.panelHighlight};
+      --woh-stat-damage-flash: ${colors.statDamageFlash};
+      --woh-stat-heal-flash: ${colors.statHealFlash};
+      --woh-stat-damage-text: ${colors.statDamageText};
+      --woh-stat-heal-text: ${colors.statHealText};
+      --woh-stat-damage-particle: ${colors.statDamageParticle};
+      --woh-stat-heal-particle: ${colors.statHealParticle};
+      --woh-stat-float-shadow: ${colors.statFloatShadow};
     }
 
     html {
@@ -486,7 +494,8 @@ function ensureStyles() {
       flex-direction: column;
       gap: 8px;
       position: relative;
-      overflow: hidden;
+      overflow: visible;
+      isolation: isolate;
     }
 
     .woh-stat-card::after {
@@ -551,6 +560,115 @@ function ensureStyles() {
       }
       50% {
         box-shadow: 0 0 12px 6px ${colors.statCriticalPulseInner};
+      }
+    }
+
+    .woh-stat-flash {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      opacity: 0;
+      mix-blend-mode: screen;
+    }
+
+    .woh-stat-flash--damage {
+      background: var(--woh-stat-damage-flash);
+      animation: woh-stat-flash 0.95s ease-out forwards;
+    }
+
+    .woh-stat-flash--heal {
+      background: var(--woh-stat-heal-flash);
+      animation: woh-stat-flash 1s ease-out forwards;
+    }
+
+    .woh-stat-float-label {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      font-family: "JetBrains Mono", monospace;
+      font-weight: 700;
+      font-size: 0.95rem;
+      letter-spacing: 0.02em;
+      filter: drop-shadow(0 0 8px var(--woh-stat-float-shadow));
+      opacity: 0;
+      --drift-x: 0px;
+      --travel-y: -30px;
+      animation: woh-stat-float 1.05s ease-out forwards;
+      z-index: 2;
+    }
+
+    .woh-stat-float-label--damage {
+      color: var(--woh-stat-damage-text);
+    }
+
+    .woh-stat-float-label--heal {
+      color: var(--woh-stat-heal-text);
+    }
+
+    .woh-stat-particle {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: 0.9;
+      transform: translate(-50%, -50%);
+      --particle-x: 0px;
+      --particle-y: -20px;
+      --particle-scale: 1;
+      animation: woh-stat-particle 0.9s ease-out forwards;
+      z-index: 1;
+    }
+
+    .woh-stat-particle--damage {
+      background: var(--woh-stat-damage-particle);
+    }
+
+    .woh-stat-particle--heal {
+      background: var(--woh-stat-heal-particle);
+    }
+
+    @keyframes woh-stat-flash {
+      0% {
+        opacity: 0.75;
+        transform: scale(1);
+      }
+      60% {
+        opacity: 0.25;
+      }
+      100% {
+        opacity: 0;
+        transform: scale(1.08);
+      }
+    }
+
+    @keyframes woh-stat-float {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%);
+      }
+      10% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+        transform: translate(calc(-50% + var(--drift-x)), calc(-50% + var(--travel-y)));
+      }
+    }
+
+    @keyframes woh-stat-particle {
+      0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(var(--particle-scale));
+      }
+      100% {
+        opacity: 0;
+        transform: translate(calc(-50% + var(--particle-x)), calc(-50% + var(--particle-y))) scale(0.35);
       }
     }
 
@@ -1344,6 +1462,7 @@ export class GameLayout {
   private readonly logAdvanceButton: HTMLButtonElement;
   private readonly endTurnButton: HTMLButtonElement;
   private lastRenderedLogSize = 0;
+  private statSnapshot = new Map<string, number>();
 
   private readonly handleRootCommand = (event: MouseEvent) => {
     if (!this.engine) {
@@ -1690,6 +1809,8 @@ export class GameLayout {
   private renderCharacterStats(stats: GameState['characterStats']): void {
     this.characterStats.innerHTML = '';
     const fragment = document.createDocumentFragment();
+    const nextSnapshot = new Map<string, number>();
+    const pendingEffects: Array<{ card: HTMLElement; delta: number }> = [];
 
     stats.forEach((stat) => {
       const card = document.createElement('div');
@@ -1729,9 +1850,89 @@ export class GameLayout {
 
       card.append(title, value, meter);
       fragment.append(card);
+
+      const previousValue = this.statSnapshot.get(stat.id);
+      if (typeof previousValue === 'number') {
+        const delta = stat.value - previousValue;
+        if (delta !== 0) {
+          pendingEffects.push({ card, delta });
+        }
+      }
+      nextSnapshot.set(stat.id, stat.value);
     });
 
     this.characterStats.append(fragment);
+    this.statSnapshot = nextSnapshot;
+    pendingEffects.forEach(({ card, delta }) => this.animateStatCardChange(card, delta));
+  }
+
+  private animateStatCardChange(card: HTMLElement, delta: number): void {
+    const variant: StatChangeVariant = delta > 0 ? 'heal' : 'damage';
+    this.animateStatShake(card, variant);
+    this.spawnStatFlash(card, variant);
+    this.spawnStatFloatLabel(card, delta);
+    const particleCount = Math.min(8, Math.max(3, Math.abs(delta)));
+    this.spawnStatParticles(card, variant, particleCount);
+  }
+
+  private animateStatShake(card: HTMLElement, variant: StatChangeVariant): void {
+    const frames: Keyframe[] =
+      variant === 'damage'
+        ? [
+            { transform: 'translate3d(0, 0, 0) rotate(0)' },
+            { transform: 'translate3d(-4px, -2px, 0) rotate(-0.8deg)' },
+            { transform: 'translate3d(5px, 2px, 0) rotate(0.8deg)' },
+            { transform: 'translate3d(-3px, 1px, 0) rotate(-0.4deg)' },
+            { transform: 'translate3d(2px, -1px, 0) rotate(0.2deg)' },
+            { transform: 'translate3d(0, 0, 0) rotate(0)' },
+          ]
+        : [
+            { transform: 'translate3d(0, 0, 0)' },
+            { transform: 'translate3d(1px, -2px, 0)' },
+            { transform: 'translate3d(-1px, 1px, 0)' },
+            { transform: 'translate3d(2px, -1px, 0)' },
+            { transform: 'translate3d(-1px, 0, 0)' },
+            { transform: 'translate3d(0, 0, 0)' },
+          ];
+
+    card.animate(frames, {
+      duration: variant === 'damage' ? 520 : 650,
+      easing: 'cubic-bezier(0.36, 0.07, 0.19, 0.97)',
+    });
+  }
+
+  private spawnStatFlash(card: HTMLElement, variant: StatChangeVariant): void {
+    const flash = document.createElement('span');
+    flash.className = `woh-stat-flash woh-stat-flash--${variant}`;
+    card.append(flash);
+    window.setTimeout(() => flash.remove(), 1000);
+  }
+
+  private spawnStatFloatLabel(card: HTMLElement, delta: number): void {
+    const variant: StatChangeVariant = delta > 0 ? 'heal' : 'damage';
+    const label = document.createElement('span');
+    label.className = `woh-stat-float-label woh-stat-float-label--${variant}`;
+    label.textContent = `${variant === 'heal' ? '+' : '-'}${Math.abs(delta)}`;
+    const drift = (Math.random() * 20 - 10).toFixed(2);
+    const travel = (Math.random() * 24 + 32).toFixed(2);
+    label.style.setProperty('--drift-x', `${drift}px`);
+    label.style.setProperty('--travel-y', variant === 'heal' ? `-${travel}px` : `${travel}px`);
+    card.append(label);
+    window.setTimeout(() => label.remove(), 1100);
+  }
+
+  private spawnStatParticles(card: HTMLElement, variant: StatChangeVariant, count: number): void {
+    for (let index = 0; index < count; index += 1) {
+      const particle = document.createElement('span');
+      particle.className = `woh-stat-particle woh-stat-particle--${variant}`;
+      const offsetX = (Math.random() * 36 - 18).toFixed(2);
+      const spread = (Math.random() * 26 + 18).toFixed(2);
+      particle.style.setProperty('--particle-x', `${offsetX}px`);
+      particle.style.setProperty('--particle-y', variant === 'heal' ? `-${spread}px` : `${spread}px`);
+      particle.style.setProperty('--particle-scale', (Math.random() * 0.6 + 0.4).toFixed(2));
+      card.append(particle);
+      window.setTimeout(() => particle.remove(), 900);
+    }
   }
 
   private renderEvent(state: GameState): void {
