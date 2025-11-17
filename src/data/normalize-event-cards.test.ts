@@ -32,7 +32,7 @@ describe("normalizeEventCard", () => {
           fail_text: "Провал",
           effect: {
             onSuccess: { clue: 1, sanity: 2 },
-            onFail: { sanity: 2, wound: 1, omen: 1, cold: 2 },
+            onFail: { sanity: 2, wound: 1, omen: 1, cold: 2, fear: 1 },
           },
         },
       ],
@@ -52,6 +52,7 @@ describe("normalizeEventCard", () => {
     ]);
     expect(choice?.failEffects?.doomDelta).toBe(1);
     expect(choice?.failEffects?.coldDelta).toBe(2);
+    expect(choice?.failEffects?.fearDelta).toBe(1);
   });
 });
 

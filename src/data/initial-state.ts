@@ -156,6 +156,14 @@ initialState.worldTracks = [
     type: "generic",
     criticalThreshold: 3,
   },
+  {
+    id: "fear",
+    label: "Страх",
+    value: 0,
+    max: 4,
+    type: "generic",
+    criticalThreshold: 3,
+  },
 ];
 
 export default initialState;

@@ -107,6 +107,24 @@ const defaultEventChoiceEffectHandlers: EventChoiceEffectHandlerMap = {
       "effect",
     );
   },
+  fearDelta: (state, delta) => {
+    if (!delta) {
+      return;
+    }
+
+    adjustTrack(state, "fear", delta);
+    const track = state.worldTracks.find((item) => item.id === "fear");
+    const label = track?.label ?? "Страх";
+    const direction = delta > 0 ? "нарастает" : "рассеивается";
+    const amount = Math.abs(delta);
+    const prefix = delta > 0 ? "+" : "-";
+    pushLogEntry(
+      state,
+      "[Страх]",
+      `${label} ${direction}. Изменение: ${prefix}${amount}.`,
+      "effect",
+    );
+  },
 };
 
 export function applyEventChoiceEffects(
