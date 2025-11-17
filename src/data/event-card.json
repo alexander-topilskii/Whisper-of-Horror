@@ -13,6 +13,7 @@
           "result": "Вы вслушались в шёпот и рискнули рассудком ради подсказки.",
           "effects": {
             "logType": "[Событие]",
+            "logVariant": "story",
             "statDeltas": [
               {
                 "statId": "sanity",
@@ -28,6 +29,7 @@
           "result": "Мел вспыхнул белым огнём, и давление трещины ослабло.",
           "effects": {
             "logType": "[Событие]",
+            "logVariant": "story",
             "doomDelta": -1,
             "actionsDelta": -2
           }
@@ -42,6 +44,7 @@
       "type": "defeat",
       "immediateEffects": {
         "logType": "[Эффект]",
+        "logVariant": "effect",
         "statDeltas": [
           { "statId": "health", "delta": -1 }
         ],
@@ -56,6 +59,7 @@
       "type": "mystery",
       "immediateEffects": {
         "logType": "[Поддержка]",
+        "logVariant": "effect",
         "victoryDelta": 1,
         "statDeltas": [
           { "statId": "sanity", "delta": 1 }

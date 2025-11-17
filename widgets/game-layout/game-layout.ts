@@ -1385,7 +1385,9 @@ export class GameLayout {
       return;
     }
 
-    this.engine.dispatch(new AppendLogEntryCommand('[Система]', 'Меню настроек пока недоступно.'));
+    this.engine.dispatch(
+      new AppendLogEntryCommand('[Система]', 'Меню настроек пока недоступно.', 'system'),
+    );
   };
 
   private readonly handleSoundToggleClick = () => {
@@ -1821,7 +1823,7 @@ export class GameLayout {
       const item = document.createElement('article');
       item.className = 'woh-log-entry';
       item.dataset.logId = entry.id;
-      item.dataset.variant = this.resolveLogVariant(entry);
+      item.dataset.variant = entry.variant ?? 'story';
 
       const type = document.createElement('span');
       type.className = 'woh-log-entry-type';
@@ -1864,45 +1866,7 @@ export class GameLayout {
     this.soundToggle.setAttribute('aria-pressed', enabled ? 'true' : 'false');
   }
 
-  private resolveLogVariant(entry: GameState['log'][number]): 'story' | 'system' | 'effect' | 'player' {
-    if (this.isPlayerCardLogEntry(entry)) {
-      return 'player';
-    }
-
-    const normalized = entry.type.toLowerCase();
-    if (normalized.includes('действие') || normalized.includes('провал') || normalized.includes('успех')) {
-      return 'player';
-    }
-    if (
-      normalized.includes('npc') ||
-      normalized.includes('эффект') ||
-      normalized.includes('улик') ||
-      normalized.includes('разруш') ||
-      normalized.includes('штраф') ||
-      normalized.includes('ранен')
-    ) {
-      return 'effect';
-    }
-    if (
-      normalized.includes('система') ||
-      normalized.includes('подсказ') ||
-      normalized.includes('тех') ||
-      normalized.includes('ход') ||
-      normalized.includes('колод')
-    ) {
-      return 'system';
-    }
-    return 'story';
-  }
-
-  private isPlayerCardLogEntry(entry: GameState['log'][number]): boolean {
-    const typeLabel = entry.type.toLowerCase();
-    if (typeLabel.includes('колода')) {
-      return false;
-    }
-
-    return entry.body.includes('Карта «');
-  }
+  // No heuristic helpers required: variants are assigned by the engine.
 
   private applyTooltip(element: HTMLElement, tooltip?: string): void {
     if (!tooltip) {

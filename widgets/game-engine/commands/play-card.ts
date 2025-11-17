@@ -1,4 +1,4 @@
-import type { GameCommand, GameState } from "../state";
+import type { GameCommand, GameState, LogEntryVariant } from "../state";
 import { pushLogEntry } from "../state";
 import {
   adjustActions,
@@ -71,25 +71,25 @@ export class PlayCardCommand implements GameCommand {
 
   execute(state: GameState): GameState {
     if (state.loopStage !== "player" || state.gameOutcome) {
-      pushLogEntry(state, "[Система]", "Сейчас нельзя играть карты.");
+      pushLogEntry(state, "[Система]", "Сейчас нельзя играть карты.", "system");
       return state;
     }
 
     const cardIndex = state.hand.findIndex((card) => card.id === this.cardId);
     if (cardIndex === -1) {
-      pushLogEntry(state, "[Система]", "Карты уже нет на руке.");
+      pushLogEntry(state, "[Система]", "Карты уже нет на руке.", "system");
       return state;
     }
 
     const card = state.hand[cardIndex];
     if (!card.playable) {
-      pushLogEntry(state, "[Действие]", `Карта «${card.name}» пока заблокирована.`);
+      pushLogEntry(state, "[Действие]", `Карта «${card.name}» пока заблокирована.`, "player");
       return state;
     }
 
     const actionCost = card.actionCost ?? 1;
     if (state.turn.actions.remaining < actionCost) {
-      pushLogEntry(state, "[Действие]", "Недостаточно очков действия для розыгрыша карты.");
+      pushLogEntry(state, "[Действие]", "Недостаточно очков действия для розыгрыша карты.", "player");
       return state;
     }
 
@@ -98,21 +98,26 @@ export class PlayCardCommand implements GameCommand {
 
     const isSuccess = this.rollForCard(card);
     let logType: string = isSuccess ? "[Действие]" : "[Провал]";
+    let logVariant: LogEntryVariant = "player";
 
     const behavior = card.type ? CARD_BEHAVIORS[card.type] : undefined;
     if (isSuccess) {
       const typeLog = behavior?.onSuccess?.(state, card) ?? null;
       if (typeLog) {
         logType = typeLog;
+        logVariant = "effect";
       }
 
       if (card.effects) {
-        logType = applyEventChoiceEffects(state, card.effects);
+        const { type, variant } = applyEventChoiceEffects(state, card.effects);
+        logType = type;
+        logVariant = variant ?? "story";
       }
     } else if (behavior?.onFailure) {
       const failureLog = behavior.onFailure(state, card);
       if (failureLog) {
         logType = failureLog;
+        logVariant = "effect";
       }
     }
 
@@ -121,13 +126,13 @@ export class PlayCardCommand implements GameCommand {
       : card.failText ?? `Карта «${card.name}» не срабатывает.`;
     const emoji = isSuccess ? '✅' : '❌';
     const baseBody = `Карта «${card.name}». ${narrative}`;
-    pushLogEntry(state, logType, `${baseBody} ${emoji}`);
+    pushLogEntry(state, logType, `${baseBody} ${emoji}`, logVariant);
 
     const shouldRemove = this.shouldRemoveAfterUse(card, isSuccess ? "successCount" : "failCount");
     if (!shouldRemove) {
       state.decks.player.discardPile.push(card);
     } else {
-      pushLogEntry(state, "[Колода]", `Карта «${card.name}» исчезает из вашей колоды.`);
+      pushLogEntry(state, "[Колода]", `Карта «${card.name}» исчезает из вашей колоды.`, "system");
     }
 
     syncPlayerDeckCounters(state);

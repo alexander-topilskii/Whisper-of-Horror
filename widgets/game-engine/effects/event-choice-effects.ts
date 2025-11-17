@@ -1,5 +1,10 @@
-import type { EventChoiceEffect, GameState, StatDelta } from "../state";
+import type { EventChoiceEffect, GameState, LogEntryVariant, StatDelta } from "../state";
 import { clamp, pushLogEntry } from "../state";
+
+export interface LogDescriptor {
+  type: string;
+  variant?: LogEntryVariant;
+}
 
 type EventChoiceEffectHandler<TKey extends keyof EventChoiceEffect> = (
   state: GameState,
@@ -68,7 +73,7 @@ const defaultEventChoiceEffectHandlers: EventChoiceEffectHandlerMap = {
       return;
     }
 
-    pushLogEntry(state, "[Улика]", `Получено улик: ${clues}.`);
+    pushLogEntry(state, "[Улика]", `Получено улик: ${clues}.`, "effect");
   },
   noise: (state, value) => {
     if (!value) {
@@ -76,7 +81,12 @@ const defaultEventChoiceEffectHandlers: EventChoiceEffectHandlerMap = {
     }
 
     adjustTrack(state, "doom", value);
-    pushLogEntry(state, "[Тревога]", `Шум привлекает внимание. Уровень ужаса растёт на ${value}.`);
+    pushLogEntry(
+      state,
+      "[Тревога]",
+      `Шум привлекает внимание. Уровень ужаса растёт на ${value}.`,
+      "effect",
+    );
   },
 };
 
@@ -84,9 +94,9 @@ export function applyEventChoiceEffects(
   state: GameState,
   effects: EventChoiceEffect | undefined,
   handlers: EventChoiceEffectHandlerMap = defaultEventChoiceEffectHandlers,
-): string {
+): LogDescriptor {
   if (!effects) {
-    return "[Событие]";
+    return { type: "[Событие]" };
   }
 
   (Object.keys(handlers) as (keyof EventChoiceEffect)[]).forEach((key) => {
@@ -103,5 +113,8 @@ export function applyEventChoiceEffects(
     handler(state, value as never, effects);
   });
 
-  return effects.logType ?? "[Событие]";
+  return {
+    type: effects.logType ?? "[Событие]",
+    variant: effects.logVariant,
+  };
 }

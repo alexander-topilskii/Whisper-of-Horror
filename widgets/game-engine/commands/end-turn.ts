@@ -15,7 +15,7 @@ function discardRemainingHand(state: GameState): void {
   const discarded = state.hand.splice(0);
   state.decks.player.discardPile.push(...discarded);
   syncPlayerDeckCounters(state);
-  pushLogEntry(state, "[Колода]", `Вы сбрасываете ${discarded.length} карт(ы).`);
+  pushLogEntry(state, "[Колода]", `Вы сбрасываете ${discarded.length} карт(ы).`, "system");
 }
 
 export class EndTurnCommand implements GameCommand {
@@ -23,24 +23,24 @@ export class EndTurnCommand implements GameCommand {
 
   execute(state: GameState): GameState {
     if (!state.journalScript.completed) {
-      pushLogEntry(state, "[Система]", "Сначала дослушайте пролог.");
+      pushLogEntry(state, "[Система]", "Сначала дослушайте пролог.", "system");
       return state;
     }
 
     if (state.gameOutcome) {
-      pushLogEntry(state, "[Система]", "Партия уже завершена.");
+      pushLogEntry(state, "[Система]", "Партия уже завершена.", "system");
       return state;
     }
 
     if (state.loopStage !== "player") {
-      pushLogEntry(state, "[Система]", "Нельзя завершить ход прямо сейчас.");
+      pushLogEntry(state, "[Система]", "Нельзя завершить ход прямо сейчас.", "system");
       return state;
     }
 
     discardRemainingHand(state);
     const event = beginEventPhase(state);
     if (!event) {
-      pushLogEntry(state, "[Событие]", "Событий не осталось. Вы пережидаете туман.");
+      pushLogEntry(state, "[Событие]", "Событий не осталось. Вы пережидаете туман.", "system");
       startPlayerTurn(state);
       return state;
     }

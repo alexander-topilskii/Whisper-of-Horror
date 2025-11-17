@@ -8,7 +8,7 @@ export class AdvanceJournalCommand implements GameCommand {
   execute(state: GameState): GameState {
     const script = state.journalScript;
     if (!script.entries.length || script.completed) {
-      pushLogEntry(state, "[Система]", "Вступление уже завершено.");
+      pushLogEntry(state, "[Система]", "Вступление уже завершено.", "system");
       return state;
     }
 
@@ -19,7 +19,7 @@ export class AdvanceJournalCommand implements GameCommand {
       return state;
     }
 
-    pushLogEntry(state, entry.type, entry.body);
+    pushLogEntry(state, entry.type, entry.body, entry.variant ?? "story");
     script.nextIndex += 1;
 
     if (script.nextIndex >= script.entries.length) {

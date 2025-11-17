@@ -13,6 +13,7 @@ export class StartNewGameCommand implements GameCommand {
       nextState,
       "[Система]",
       "Партия сброшена. Вернитесь к прологу и нажимайте «Далее».",
+      "system",
     );
     return nextState;
   }

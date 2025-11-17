@@ -6,7 +6,12 @@ export class ToggleSoundCommand implements GameCommand {
 
   execute(state: GameState): GameState {
     state.soundEnabled = !state.soundEnabled;
-    pushLogEntry(state, "[Система]", state.soundEnabled ? "Звук включён." : "Звук отключён.");
+    pushLogEntry(
+      state,
+      "[Система]",
+      state.soundEnabled ? "Звук включён." : "Звук отключён.",
+      "system",
+    );
     return state;
   }
 }

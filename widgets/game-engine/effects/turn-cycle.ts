@@ -12,13 +12,18 @@ function shuffleInPlace<T>(items: T[]): void {
 function reshufflePlayerDiscardIntoDraw(state: GameState): boolean {
   const discard = state.decks.player.discardPile;
   if (!discard.length) {
-    pushLogEntry(state, "[Колода]", "Карты закончились, а сброс пуст. Отдохните перед следующим ходом.");
+    pushLogEntry(
+      state,
+      "[Колода]",
+      "Карты закончились, а сброс пуст. Отдохните перед следующим ходом.",
+      "system",
+    );
     return false;
   }
 
   shuffleInPlace(discard);
   state.decks.player.drawPile = discard.splice(0);
-  pushLogEntry(state, "[Колода]", "Сброс перетасован и возвращён в колоду.");
+  pushLogEntry(state, "[Колода]", "Сброс перетасован и возвращён в колоду.", "system");
   syncPlayerDeckCounters(state);
   return true;
 }
@@ -26,13 +31,13 @@ function reshufflePlayerDiscardIntoDraw(state: GameState): boolean {
 function reshuffleEventDiscardIntoDraw(state: GameState): boolean {
   const discard = state.decks.event.discardPile;
   if (!discard.length) {
-    pushLogEntry(state, "[Событие]", "Колода событий пуста, туман затихает.");
+    pushLogEntry(state, "[Событие]", "Колода событий пуста, туман затихает.", "system");
     return false;
   }
 
   shuffleInPlace(discard);
   state.decks.event.drawPile = discard.splice(0);
-  pushLogEntry(state, "[Событие]", "Сброс событий перетасован.");
+  pushLogEntry(state, "[Событие]", "Сброс событий перетасован.", "system");
   syncEventDeckCounters(state);
   return true;
 }
@@ -95,7 +100,7 @@ export function startPlayerTurn(state: GameState): void {
   state.phase.name = `Ход ${state.turn.number}`;
   state.phase.subtitle = "Сыграйте карты и подготовьтесь";
   const drawn = drawPlayerCards(state, 3);
-  pushLogEntry(state, "[Ход]", `Начинается ход ${state.turn.number}. Вы взяли ${drawn} карт(ы).`);
+  pushLogEntry(state, "[Ход]", `Начинается ход ${state.turn.number}. Вы взяли ${drawn} карт(ы).`, "system");
 }
 
 export function beginEventPhase(state: GameState): EventCardState | null {
@@ -115,7 +120,7 @@ export function beginEventPhase(state: GameState): EventCardState | null {
   state.phase.icon = "☄️";
   state.phase.name = "Фаза событий";
   state.phase.subtitle = nextEvent.title;
-  pushLogEntry(state, "[Событие]", `Открыто событие «${nextEvent.title}».`);
+  pushLogEntry(state, "[Событие]", `Открыто событие «${nextEvent.title}».`, "story");
   return nextEvent;
 }
 
@@ -131,7 +136,7 @@ function evaluateOutcome(state: GameState): "victory" | "defeat" | null {
     state.phase.icon = "🏆";
     state.phase.name = "Победа";
     state.phase.subtitle = "Следопыты раскрыли тайну";
-    pushLogEntry(state, "[Финал]", "Вы собрали достаточно улик, чтобы остановить туман.");
+    pushLogEntry(state, "[Финал]", "Вы собрали достаточно улик, чтобы остановить туман.", "story");
     return "victory";
   }
 
@@ -142,7 +147,7 @@ function evaluateOutcome(state: GameState): "victory" | "defeat" | null {
     state.phase.icon = "☠️";
     state.phase.name = "Поражение";
     state.phase.subtitle = "Туман поглотил Старый район";
-    pushLogEntry(state, "[Финал]", "Разрушение достигает критической отметки. Вам не уйти.");
+    pushLogEntry(state, "[Финал]", "Разрушение достигает критической отметки. Вам не уйти.", "story");
     return "defeat";
   }
 
@@ -164,7 +169,7 @@ export function completeEventPhase(state: GameState): void {
 }
 
 export function resolveImmediateEvent(state: GameState, event: EventCardState): void {
-  const logType = applyEventChoiceEffects(state, event.immediateEffects);
-  pushLogEntry(state, logType, event.effect);
+  const { type: logType, variant: logVariant } = applyEventChoiceEffects(state, event.immediateEffects);
+  pushLogEntry(state, logType, event.effect, logVariant ?? "story");
   completeEventPhase(state);
 }

@@ -47,7 +47,7 @@ function createState(): GameState {
 describe("applyEventChoiceEffects", () => {
   it("applies default handlers for stats, tracks, actions and clues", () => {
     const state = createState();
-    const logType = applyEventChoiceEffects(state, {
+    const logDescriptor = applyEventChoiceEffects(state, {
       statDeltas: [
         { statId: "will", delta: 2 },
         { statId: "missing", delta: 3 },
@@ -58,7 +58,7 @@ describe("applyEventChoiceEffects", () => {
       cluesGained: 2,
     });
 
-    expect(logType).toBe("[Событие]");
+    expect(logDescriptor).toEqual({ type: "[Событие]" });
     expect(state.characterStats.find((stat: CharacterStatState) => stat.id === "will")?.value).toBe(3);
     expect(state.worldTracks.find((track: TrackState) => track.id === "doom")?.value).toBe(4);
     expect(state.worldTracks.find((track: TrackState) => track.id === "victory")?.value).toBe(4);
@@ -69,9 +69,9 @@ describe("applyEventChoiceEffects", () => {
 
   it("escalates doom and logs alarm when noise is applied", () => {
     const state = createState();
-    const logType = applyEventChoiceEffects(state, { noise: 2 });
+    const logDescriptor = applyEventChoiceEffects(state, { noise: 2 });
 
-    expect(logType).toBe("[Событие]");
+    expect(logDescriptor).toEqual({ type: "[Событие]" });
     expect(state.worldTracks.find((track: TrackState) => track.id === "doom")?.value).toBe(4);
     expect(state.log).toHaveLength(1);
     expect(state.log[0]).toMatchObject({
@@ -85,11 +85,11 @@ describe("applyEventChoiceEffects", () => {
     const effects: EventChoiceEffect = { cluesGained: 3 };
     const handler = vi.fn();
 
-    const logType = applyEventChoiceEffects(state, effects, {
+    const logDescriptor = applyEventChoiceEffects(state, effects, {
       cluesGained: handler,
     });
 
-    expect(logType).toBe("[Событие]");
+    expect(logDescriptor).toEqual({ type: "[Событие]" });
     expect(handler).toHaveBeenCalledTimes(1);
     expect(handler).toHaveBeenCalledWith(state, 3, effects);
     expect(state.log).toHaveLength(0);
@@ -97,11 +97,12 @@ describe("applyEventChoiceEffects", () => {
 
   it("returns the provided log type when supplied", () => {
     const state = createState();
-    const logType = applyEventChoiceEffects(state, {
+    const logDescriptor = applyEventChoiceEffects(state, {
       logType: "[Тест]",
+      logVariant: "effect",
     });
 
-    expect(logType).toBe("[Тест]");
+    expect(logDescriptor).toEqual({ type: "[Тест]", variant: "effect" });
     expect(state.log).toHaveLength(0);
   });
 });

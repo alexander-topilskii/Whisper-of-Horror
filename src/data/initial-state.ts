@@ -97,7 +97,7 @@ function appendScenarioMessagesToLog(state: GameState) {
   if (intro?.flavor?.length) {
     const introType = `[Пролог] ${intro.title ?? scenario.title ?? "Сценарий"}`;
     const introBody = intro.flavor.join("\n\n");
-    tutorialEntries.push({ id: "scenario-intro", type: introType, body: introBody });
+    tutorialEntries.push({ id: "scenario-intro", type: introType, body: introBody, variant: "story" });
   }
 
   const task = scenario.firstTask;
@@ -110,7 +110,12 @@ function appendScenarioMessagesToLog(state: GameState) {
     if (task.failCondition) {
       summaryParts.push(`Провал: ${task.failCondition}`);
     }
-    tutorialEntries.push({ id: task.id ?? "scenario-task", type: taskType, body: summaryParts.filter(Boolean).join("\n") });
+    tutorialEntries.push({
+      id: task.id ?? "scenario-task",
+      type: taskType,
+      body: summaryParts.filter(Boolean).join("\n"),
+      variant: "story",
+    });
   }
 }
 
@@ -121,7 +126,7 @@ tutorialEntries.push(...technicalEntries);
 
 const firstEntry = tutorialEntries[0];
 if (firstEntry) {
-  pushLogEntry(initialState, firstEntry.type, firstEntry.body);
+  pushLogEntry(initialState, firstEntry.type, firstEntry.body, firstEntry.variant ?? "story");
 }
 
 initialState.journalScript = {

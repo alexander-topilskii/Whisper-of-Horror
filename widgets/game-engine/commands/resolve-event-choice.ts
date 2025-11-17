@@ -10,24 +10,24 @@ export class ResolveEventChoiceCommand implements GameCommand {
 
   execute(state: GameState): GameState {
     if (state.loopStage !== "event" || state.gameOutcome) {
-      pushLogEntry(state, "[Событие]", "Сейчас не требуется выбирать развилку.");
+      pushLogEntry(state, "[Событие]", "Сейчас не требуется выбирать развилку.", "system");
       return state;
     }
 
     if (!state.eventResolutionPending) {
-      pushLogEntry(state, "[Событие]", "Эффект уже завершён.");
+      pushLogEntry(state, "[Событие]", "Эффект уже завершён.", "system");
       return state;
     }
 
     const choices = state.event.choices ?? [];
     const choice = choices.find((item) => item.id === this.choiceId);
     if (!choice) {
-      pushLogEntry(state, "[Система]", "Выбор события не найден.");
+      pushLogEntry(state, "[Система]", "Выбор события не найден.", "system");
       return state;
     }
 
     if (choice.resolved) {
-      pushLogEntry(state, choice.effects?.logType ?? "[Событие]", "Эта развилка уже завершена.");
+      pushLogEntry(state, choice.effects?.logType ?? "[Событие]", "Эта развилка уже завершена.", "system");
       return state;
     }
 
@@ -46,12 +46,12 @@ export class ResolveEventChoiceCommand implements GameCommand {
       const narrative = success
         ? choice.successText ?? fallbackResult
         : choice.failText ?? fallbackResult;
-      const logType = applyEventChoiceEffects(state, effects);
+      const { type: logType, variant: logVariant } = applyEventChoiceEffects(state, effects);
       const chanceSuffix = ` Шанс ${Math.round(chance * 100)}%, результат: ${success ? "успех" : "провал"}.`;
-      pushLogEntry(state, logType, `${narrative}${chanceSuffix}`.trim());
+      pushLogEntry(state, logType, `${narrative}${chanceSuffix}`.trim(), logVariant ?? "story");
     } else {
-      const logType = applyEventChoiceEffects(state, choice.effects);
-      pushLogEntry(state, logType, choice.result ?? "Эффект завершён.");
+      const { type: logType, variant: logVariant } = applyEventChoiceEffects(state, choice.effects);
+      pushLogEntry(state, logType, choice.result ?? "Эффект завершён.", logVariant ?? "story");
     }
 
     const unresolved = choices.some((item) => !item.resolved);

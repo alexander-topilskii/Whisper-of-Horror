@@ -25,7 +25,7 @@ GameEngine
 - `dispatch(command)` клонирует текущее состояние, применяет команду, сохраняет результат и записывает команду в историю.
 - `subscribe(listener)` добавляет подписчика и возвращает функцию для отписки; уведомления отправляются только после успешного `dispatch`.
 - Команды (`PlayCardCommand`, `ResolveEventChoiceCommand`, `ToggleSoundCommand`, `StartNewGameCommand`, `AppendLogEntryCommand`) используют вспомогательные функции для изменения треков, статов и логов.
-- Логи ограничиваются 20 последними записями, новые вставляются в начало.
+- Логи ограничиваются 20 последними записями, новые вставляются в начало и хранят `variant` для цвета UI.
 
 ## API (Props / Inputs / Outputs)
 | Name | Type | Default | Description |
@@ -43,7 +43,7 @@ GameEngine
 | `PlayCardCommand(cardId)` | Удаляет карту из руки, тратит действия и записывает событие в лог. |
 | `ResolveEventChoiceCommand(choiceId)` | Помечает выбор как завершённый, применяет эффекты (треки, статы, действия). |
 | `ToggleSoundCommand()` | Переключает `soundEnabled` и фиксирует изменение в логе. |
-| `AppendLogEntryCommand(type, body)` | Добавляет произвольную запись в журнал. |
+| `AppendLogEntryCommand(type, body, variant?)` | Добавляет произвольную запись в журнал и задаёт цвет. |
 
 ## States and Examples
 - **Старт игры**: `StartNewGameCommand` возвращает базовое состояние с заполненными руками и обнулённой историей.

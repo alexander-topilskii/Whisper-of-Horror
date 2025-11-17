@@ -92,6 +92,7 @@ export interface StatDelta {
 
 export interface EventChoiceEffect {
   logType?: string;
+  logVariant?: LogEntryVariant;
   doomDelta?: number;
   victoryDelta?: number;
   statDeltas?: StatDelta[];
@@ -124,10 +125,13 @@ export interface EventCardState {
   immediateEffects?: EventChoiceEffect;
 }
 
+export type LogEntryVariant = "story" | "system" | "effect" | "player";
+
 export interface LogEntry {
   id: string;
   type: string;
   body: string;
+  variant?: LogEntryVariant;
 }
 
 export interface ScenarioIntroState {
@@ -165,6 +169,7 @@ export interface JournalScriptEntry {
   id: string;
   type: string;
   body: string;
+  variant?: LogEntryVariant;
 }
 
 export interface JournalScriptState {
@@ -223,11 +228,17 @@ export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-export function pushLogEntry(state: GameState, type: string, body: string) {
+export function pushLogEntry(
+  state: GameState,
+  type: string,
+  body: string,
+  variant: LogEntryVariant = "story",
+) {
   const entry: LogEntry = {
     id: generateLogId(),
     type,
     body,
+    variant,
   };
 
   state.log = [entry, ...state.log].slice(0, LOG_LIMIT);
