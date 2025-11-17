@@ -10,6 +10,7 @@ function createState(): GameState {
       event: { draw: 5, discard: 0, next: null, drawPile: [], discardPile: [] },
     },
     hand: [],
+    lastCardPlay: null,
     phase: { icon: "", name: "", subtitle: "" },
     worldTracks: [
       { id: "doom", label: "Doom", value: 2, max: 10, type: "doom" },
