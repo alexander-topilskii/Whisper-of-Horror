@@ -1,5 +1,6 @@
 import type { EventChoiceEffect, GameState, LogEntryVariant, StatDelta } from "../state";
 import { clamp, pushLogEntry } from "../state";
+import { adjustTemporaryMarker } from "./temporary-markers";
 
 export interface LogDescriptor {
   type: string;
@@ -122,12 +123,15 @@ const defaultEventChoiceEffectHandlers: EventChoiceEffectHandlerMap = {
       return;
     }
 
-    adjustTrack(state, "cold", delta);
-    const track = state.worldTracks.find((item) => item.id === "cold");
-    const label = track?.label ?? "Холод";
-    const direction = delta > 0 ? "усиливается" : "ослабевает";
-    const amount = Math.abs(delta);
-    const prefix = delta > 0 ? "+" : "-";
+    const result = adjustTemporaryMarker(state, "cold", delta);
+    if (!result || result.appliedDelta === 0) {
+      return;
+    }
+
+    const label = result.marker.label ?? "Холод";
+    const direction = result.appliedDelta > 0 ? "усиливается" : "ослабевает";
+    const amount = Math.abs(result.appliedDelta);
+    const prefix = result.appliedDelta > 0 ? "+" : "-";
     pushLogEntry(
       state,
       "[Холод]",
@@ -140,12 +144,15 @@ const defaultEventChoiceEffectHandlers: EventChoiceEffectHandlerMap = {
       return;
     }
 
-    adjustTrack(state, "fear", delta);
-    const track = state.worldTracks.find((item) => item.id === "fear");
-    const label = track?.label ?? "Страх";
-    const direction = delta > 0 ? "нарастает" : "рассеивается";
-    const amount = Math.abs(delta);
-    const prefix = delta > 0 ? "+" : "-";
+    const result = adjustTemporaryMarker(state, "fear", delta);
+    if (!result || result.appliedDelta === 0) {
+      return;
+    }
+
+    const label = result.marker.label ?? "Страх";
+    const direction = result.appliedDelta > 0 ? "нарастает" : "рассеивается";
+    const amount = Math.abs(result.appliedDelta);
+    const prefix = result.appliedDelta > 0 ? "+" : "-";
     pushLogEntry(
       state,
       "[Страх]",

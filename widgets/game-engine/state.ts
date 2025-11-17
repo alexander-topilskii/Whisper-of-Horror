@@ -66,6 +66,16 @@ export interface StatusEffect {
   tone: "positive" | "negative" | "neutral";
 }
 
+export interface TemporaryMarkerState {
+  id: string;
+  label: string;
+  description: string;
+  tone: "positive" | "negative" | "neutral";
+  value: number;
+  max?: number;
+  actionPenaltyPerStack?: number;
+}
+
 export interface CardModifierState {
   id: string;
   sourceCardId: string;
@@ -212,6 +222,7 @@ export interface GameState {
   worldTracks: TrackState[];
   characterStats: CharacterStatState[];
   statuses: StatusEffect[];
+  temporaryMarkers: TemporaryMarkerState[];
   npcs: NpcDefinition[];
   event: EventCardState;
   scenario: ScenarioState;

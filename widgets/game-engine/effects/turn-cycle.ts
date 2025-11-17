@@ -1,6 +1,7 @@
 import type { EventCardState, GameState } from "../state";
 import { pushLogEntry } from "../state";
 import { applyEventChoiceEffects } from "./event-choice-effects";
+import { applyActionPenaltiesFromMarkers } from "./temporary-markers";
 import { createEventPlaceholder } from "../../../src/data/event-placeholder";
 
 function shuffleInPlace<T>(items: T[]): void {
@@ -98,6 +99,7 @@ export function startPlayerTurn(state: GameState): void {
   state.eventResolutionPending = false;
   state.turn.number += 1;
   state.turn.actions.remaining = state.turn.actions.total;
+  applyActionPenaltiesFromMarkers(state);
   state.phase.icon = "🂠";
   state.phase.name = `Ход ${state.turn.number}`;
   state.phase.subtitle = "Сыграйте карты и подготовьтесь";

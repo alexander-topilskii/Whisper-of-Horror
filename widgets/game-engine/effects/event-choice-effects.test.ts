@@ -14,14 +14,29 @@ function createState(): GameState {
     worldTracks: [
       { id: "doom", label: "Doom", value: 2, max: 10, type: "doom" },
       { id: "victory", label: "Victory", value: 5, max: 10, type: "victory" },
-      { id: "cold", label: "Холод", value: 0, max: 3, type: "generic" },
-      { id: "fear", label: "Страх", value: 0, max: 4, type: "generic" },
     ],
     characterStats: [
       { id: "will", label: "Will", value: 1, max: 6 },
       { id: "sanity", label: "Рассудок", value: 3, max: 7 },
     ],
     statuses: [],
+    temporaryMarkers: [
+      {
+        id: "cold",
+        label: "Холод",
+        description: "",
+        tone: "negative",
+        value: 0,
+        actionPenaltyPerStack: 1,
+      },
+      {
+        id: "fear",
+        label: "Страх",
+        description: "",
+        tone: "negative",
+        value: 0,
+      },
+    ],
     npcs: [],
     event: { id: "test-event", title: "", flavor: "", effect: "", choices: [] },
     scenario: {
@@ -91,7 +106,8 @@ describe("applyEventChoiceEffects", () => {
     const logDescriptor = applyEventChoiceEffects(state, { coldDelta: 2 });
 
     expect(logDescriptor).toEqual({ type: "[Событие]" });
-    expect(state.worldTracks.find((track: TrackState) => track.id === "cold")?.value).toBe(2);
+    expect(state.temporaryMarkers.find((marker) => marker.id === "cold")?.value).toBe(2);
+    expect(state.turn.actions.remaining).toBe(1);
     expect(state.log).toHaveLength(1);
     expect(state.log[0]).toMatchObject({
       type: "[Холод]",
@@ -104,7 +120,7 @@ describe("applyEventChoiceEffects", () => {
     const logDescriptor = applyEventChoiceEffects(state, { fearDelta: 1 });
 
     expect(logDescriptor).toEqual({ type: "[Событие]" });
-    expect(state.worldTracks.find((track: TrackState) => track.id === "fear")?.value).toBe(1);
+    expect(state.temporaryMarkers.find((marker) => marker.id === "fear")?.value).toBe(1);
     expect(state.log).toHaveLength(1);
     expect(state.log[0]).toMatchObject({
       type: "[Страх]",

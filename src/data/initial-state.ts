@@ -4,7 +4,7 @@ import handCards from "./hand-cards.json";
 import journalScript from "./journal-script.json";
 import scenario from "./scenario.json";
 import worldSettings from "./world-settings.json";
-import type { GameState, JournalScriptEntry } from "../../widgets/game-engine/state";
+import type { CardDefinition, GameState, JournalScriptEntry } from "../../widgets/game-engine/state";
 import { pushLogEntry } from "../../widgets/game-engine/state";
 import { normalizeEventDeck, type RawEventCard } from "./normalize-event-cards";
 import { createEventPlaceholder } from "./event-placeholder";
@@ -32,6 +32,7 @@ const initialState = {
   loopStage: "story",
   eventResolutionPending: false,
   gameOutcome: null,
+  temporaryMarkers: [],
 } as GameState;
 
 initialState.modifiers = [];
@@ -47,11 +48,14 @@ function createShuffledDeck<T>(cards: T[] | undefined): T[] {
 
 const STARTING_HAND_SIZE = 3;
 const playerDeckData = handCards.playerDeck ?? { hand: [], drawPile: [], discardPile: [] };
-const predefinedHand = playerDeckData.hand ?? [];
-const plannedOpeningCards = predefinedHand.slice(0, STARTING_HAND_SIZE);
+const predefinedHand = (playerDeckData.hand ?? []) as CardDefinition[];
+const plannedOpeningCards: CardDefinition[] = predefinedHand.slice(0, STARTING_HAND_SIZE);
 const overflowHand = predefinedHand.slice(STARTING_HAND_SIZE);
-const combinedDrawPile = [...overflowHand, ...(playerDeckData.drawPile ?? [])];
-const shuffledDrawPile = createShuffledDeck(combinedDrawPile);
+const combinedDrawPile: CardDefinition[] = [
+  ...overflowHand,
+  ...((playerDeckData.drawPile ?? []) as CardDefinition[]),
+];
+const shuffledDrawPile = createShuffledDeck<CardDefinition>(combinedDrawPile);
 
 while (plannedOpeningCards.length < STARTING_HAND_SIZE && shuffledDrawPile.length) {
   const nextCard = shuffledDrawPile.shift();
@@ -150,21 +154,25 @@ initialState.worldTracks = [
     type: "doom",
     criticalThreshold: fail?.requiredAmount ?? undefined,
   },
+];
+
+initialState.temporaryMarkers = [
   {
     id: "cold",
     label: "Холод",
+    description: "Каждая единица холода отнимает 1 очко действия до конца хода.",
+    tone: "negative",
     value: 0,
     max: 3,
-    type: "generic",
-    criticalThreshold: 3,
+    actionPenaltyPerStack: 1,
   },
   {
     id: "fear",
     label: "Страх",
+    description: "Краткосрочный ужас ослабевает на 1 в конце вашего хода.",
+    tone: "negative",
     value: 0,
     max: 4,
-    type: "generic",
-    criticalThreshold: 3,
   },
 ];
 
