@@ -31,6 +31,7 @@ const initialState = {
   journalScript: { entries: [], nextIndex: 0, completed: false },
   loopStage: "story",
   eventResolutionPending: false,
+  eventResolutionSummary: null,
   gameOutcome: null,
   temporaryMarkers: [],
 } as GameState;
