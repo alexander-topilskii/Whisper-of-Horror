@@ -63,6 +63,7 @@ function createEventState(): GameState {
     autoScrollLog: true,
     soundEnabled: true,
     modifiers: [],
+    eventResolutionSummary: null,
   };
 }
 
@@ -75,8 +76,7 @@ describe("ResolveEventChoiceCommand", () => {
     command.execute(state);
     randomSpy.mockRestore();
 
-    const resolvedEvent = state.decks.event.discardPile[0];
-    const choice = resolvedEvent?.choices?.[0];
+    const choice = state.event.choices?.[0];
     expect(choice?.resolved).toBe(true);
     expect(choice?.outcome).toBe("success");
     expect(state.characterStats[0].value).toBe(4);
@@ -92,8 +92,7 @@ describe("ResolveEventChoiceCommand", () => {
     command.execute(state);
     randomSpy.mockRestore();
 
-    const resolvedEvent = state.decks.event.discardPile[0];
-    const choice = resolvedEvent?.choices?.[0];
+    const choice = state.event.choices?.[0];
     expect(choice?.resolved).toBe(true);
     expect(choice?.outcome).toBe("fail");
     expect(state.worldTracks[0].value).toBe(1);
@@ -101,7 +100,7 @@ describe("ResolveEventChoiceCommand", () => {
     expect(eventLog?.body).toContain("результат: провал");
   });
 
-  it("completes the event phase and returns control to the player", () => {
+  it("оставляет фазу активной до подтверждения результата", () => {
     const state = createEventState();
     const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0.1);
     const command = new ResolveEventChoiceCommand("choice");
@@ -109,11 +108,9 @@ describe("ResolveEventChoiceCommand", () => {
     command.execute(state);
     randomSpy.mockRestore();
 
-    expect(state.loopStage).toBe("player");
-    expect(state.turn.number).toBe(2);
-    expect(state.turn.actions.remaining).toBe(state.turn.actions.total);
-    expect(state.event.id).toBe("no-event");
-    expect(state.decks.event.discardPile).toHaveLength(1);
-    expect(state.hand).toHaveLength(3);
+    expect(state.loopStage).toBe("event");
+    expect(state.eventResolutionPending).toBe(false);
+    expect(state.eventResolutionSummary?.body).toContain("Шанс 50%");
+    expect(state.decks.event.discardPile).toHaveLength(0);
   });
 });

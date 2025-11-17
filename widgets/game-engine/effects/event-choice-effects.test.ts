@@ -62,6 +62,7 @@ function createState(): GameState {
     autoScrollLog: true,
     soundEnabled: true,
     modifiers: [],
+    eventResolutionSummary: null,
   };
 }
 

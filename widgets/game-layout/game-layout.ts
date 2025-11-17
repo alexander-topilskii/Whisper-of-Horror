@@ -3,6 +3,7 @@ import type { GameState } from "../game-engine/state";
 import {
   AppendLogEntryCommand,
   AdvanceJournalCommand,
+  CompleteEventPhaseCommand,
   EndTurnCommand,
   PlayCardCommand,
   ResolveEventChoiceCommand,
@@ -150,7 +151,7 @@ function ensureStyles() {
 
     .woh-main {
       display: grid;
-      grid-template-columns: 0.85fr 1fr 1.2fr 1fr;
+      grid-template-columns: 0.85fr 1.1fr 1.2fr;
       gap: 24px;
       padding: 24px 32px;
       overflow: hidden;
@@ -237,15 +238,19 @@ function ensureStyles() {
       animation: woh-panel-event-pulse 4.2s ease-in-out infinite;
     }
 
-    .woh-panel--hand {
+    .woh-panel--interaction {
+      --woh-panel-accent: ${colors.panelAccentDefault};
+    }
+
+    .woh-panel--interaction[data-stage='player'] {
       --woh-panel-accent: ${colors.panelAccentHand};
     }
 
-    .woh-panel--events {
+    .woh-panel--interaction[data-stage='event'] {
       --woh-panel-accent: ${colors.panelAccentEvents};
     }
 
-    .woh-panel--events[data-event-tone='defeat'] {
+    .woh-panel--interaction[data-stage='event'][data-event-tone='defeat'] {
       --woh-panel-accent: ${colors.panelAccentDefeat};
     }
 
@@ -269,6 +274,45 @@ function ensureStyles() {
 
     .woh-panel-header .woh-panel-title {
       margin-bottom: 0;
+    }
+
+    .woh-interaction-stage {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      min-height: 0;
+    }
+
+    .woh-interaction-view {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+      min-height: 0;
+    }
+
+    .woh-interaction-view.is-active {
+      display: flex;
+    }
+
+    .woh-story-card {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .woh-story-type {
+      font-size: 0.82rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: ${colors.logHeaderText};
+    }
+
+    .woh-story-text {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: ${colors.logEntriesText};
+      white-space: pre-line;
     }
 
     .woh-turn-card {
@@ -934,6 +978,33 @@ function ensureStyles() {
       gap: 10px;
     }
 
+    .woh-event-result {
+      border-top: 1px dashed ${colors.eventEffectBorder};
+      padding: 14px 0 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      color: ${colors.eventEffectText};
+    }
+
+    .woh-event-result-title {
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: ${colors.logEntryTypeText};
+    }
+
+    .woh-event-result-body {
+      font-size: 0.9rem;
+      line-height: 1.5;
+      white-space: pre-line;
+    }
+
+    .woh-button--full {
+      width: 100%;
+      justify-content: center;
+    }
+
     .woh-event-empty {
       margin: 0;
       font-size: 0.78rem;
@@ -1063,7 +1134,7 @@ function ensureStyles() {
 
     @media (max-width: 1280px) {
       .woh-main {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
       .woh-column--log {
@@ -1081,16 +1152,12 @@ function ensureStyles() {
         order: 1;
       }
 
-      .woh-column--left {
+      .woh-column--interaction {
         order: 2;
       }
 
-      .woh-column--right {
-        order: 3;
-      }
-
       .woh-column--center {
-        order: 4;
+        order: 3;
       }
     }
 
@@ -1446,43 +1513,73 @@ const TEMPLATE = `
         <article class="woh-panel" data-panel="log">
           <div class="woh-panel-header">
             <h2 class="woh-panel-title">Журнал хода</h2>
-            <button class="woh-button woh-button--ghost" type="button" data-action="advance-log">Далее</button>
           </div>
           <div class="woh-log">
             <div class="woh-log-entries" role="log" aria-live="polite" data-role="log-entries"></div>
           </div>
         </article>
       </section>
-      <section class="woh-column woh-column--left">
-        <article class="woh-panel woh-panel--glass woh-panel--hand woh-turn-card" data-panel="hand">
-          <div class="woh-turn-main">
-            <div class="woh-turn-header">
-              <div class="woh-panel-header">
-                <h2 class="woh-panel-title">Ход игрока</h2>
-                <button class="woh-button woh-button--ghost" type="button" data-action="end-turn">Закончить ход</button>
-              </div>
-              <div class="woh-turn-actions">
-                <div class="woh-action-dots" role="group" aria-label="Очки действия" data-role="action-dots"></div>
+      <section class="woh-column woh-column--interaction">
+        <article
+          class="woh-panel woh-panel--glass woh-panel--interaction"
+          data-panel="interaction"
+          data-stage="story"
+        >
+          <div class="woh-interaction-stage">
+            <div class="woh-interaction-view woh-interaction-view--story is-active" data-view="story">
+              <div class="woh-story-card">
+                <h2 class="woh-panel-title">Пролог</h2>
+                <div class="woh-story-type" data-role="story-title"></div>
+                <p class="woh-story-text" data-role="story-text"></p>
+                <button class="woh-button woh-button--full" type="button" data-action="advance-log">Далее</button>
               </div>
             </div>
-            <div class="woh-hand" role="list" data-role="hand"></div>
+            <div class="woh-interaction-view woh-interaction-view--player" data-view="player">
+              <div class="woh-turn-card">
+                <div class="woh-turn-main">
+                  <div class="woh-turn-header">
+                    <div class="woh-panel-header">
+                      <h2 class="woh-panel-title">Ход игрока</h2>
+                      <button class="woh-button woh-button--ghost" type="button" data-action="end-turn">
+                        Закончить ход
+                      </button>
+                    </div>
+                    <div class="woh-turn-actions">
+                      <div class="woh-action-dots" role="group" aria-label="Очки действия" data-role="action-dots"></div>
+                    </div>
+                  </div>
+                  <div class="woh-hand" role="list" data-role="hand"></div>
+                </div>
+                <div class="woh-turn-summary">
+                  <div class="woh-turn-summary-items" data-role="player-deck"></div>
+                  <span class="woh-actions-label" data-role="actions-label"></span>
+                </div>
+              </div>
+            </div>
+            <div class="woh-interaction-view woh-interaction-view--event" data-view="event">
+              <div class="woh-event-card" data-role="event-card">
+                <h2 class="woh-panel-title">События</h2>
+                <div class="woh-event-main">
+                  <div class="woh-event-title" data-role="event-title"></div>
+                  <div class="woh-event-flavor" data-role="event-flavor"></div>
+                  <div class="woh-event-effect" data-role="event-effect"></div>
+                  <div class="woh-event-choices" data-role="event-choices"></div>
+                </div>
+                <div class="woh-event-result is-hidden" data-role="event-result">
+                  <span class="woh-event-result-title" data-role="event-result-title"></span>
+                  <p class="woh-event-result-body" data-role="event-result-body"></p>
+                </div>
+                <div class="woh-event-deck" data-role="event-deck"></div>
+                <button
+                  class="woh-button woh-button--full is-hidden"
+                  type="button"
+                  data-action="complete-event"
+                >
+                  Продолжить
+                </button>
+              </div>
+            </div>
           </div>
-          <div class="woh-turn-summary">
-            <div class="woh-turn-summary-items" data-role="player-deck"></div>
-            <span class="woh-actions-label" data-role="actions-label"></span>
-          </div>
-        </article>
-      </section>
-      <section class="woh-column woh-column--right">
-        <article class="woh-panel woh-panel--glass woh-panel--events woh-event-card" data-panel="event">
-          <h2 class="woh-panel-title">События</h2>
-          <div class="woh-event-main">
-            <div class="woh-event-title" data-role="event-title"></div>
-            <div class="woh-event-flavor" data-role="event-flavor"></div>
-            <div class="woh-event-effect" data-role="event-effect"></div>
-            <div class="woh-event-choices" data-role="event-choices"></div>
-          </div>
-          <div class="woh-event-deck" data-role="event-deck"></div>
         </article>
       </section>
       <section class="woh-column woh-column--center">
@@ -1533,19 +1630,28 @@ export class GameLayout {
   private readonly scenarioTitle: HTMLElement;
   private readonly characterStats: HTMLElement;
   private readonly logPanel: HTMLElement;
-  private readonly handPanel: HTMLElement;
-  private readonly eventPanel: HTMLElement;
+  private readonly interactionPanel: HTMLElement;
+  private readonly storyView: HTMLElement;
+  private readonly playerView: HTMLElement;
+  private readonly eventView: HTMLElement;
+  private readonly storyTitle: HTMLElement;
+  private readonly storyBody: HTMLElement;
+  private readonly eventCard: HTMLElement;
   private readonly eventTitle: HTMLElement;
   private readonly eventFlavor: HTMLElement;
   private readonly eventEffect: HTMLElement;
   private readonly eventChoices: HTMLElement;
   private readonly eventDeck: HTMLElement;
+  private readonly eventResult: HTMLElement;
+  private readonly eventResultTitle: HTMLElement;
+  private readonly eventResultBody: HTMLElement;
   private readonly logEntries: HTMLDivElement;
   private readonly soundToggle: HTMLButtonElement;
   private readonly newGameButton: HTMLButtonElement;
   private readonly settingsButton: HTMLButtonElement;
   private readonly logAdvanceButton: HTMLButtonElement;
   private readonly endTurnButton: HTMLButtonElement;
+  private readonly eventContinueButton: HTMLButtonElement;
   private lastRenderedLogSize = 0;
   private statSnapshot = new Map<string, number>();
 
@@ -1618,6 +1724,14 @@ export class GameLayout {
     this.engine.dispatch(new EndTurnCommand());
   };
 
+  private readonly handleCompleteEventClick = () => {
+    if (!this.engine) {
+      return;
+    }
+
+    this.engine.dispatch(new CompleteEventPhaseCommand());
+  };
+
   constructor(root: HTMLElement) {
     if (!root) {
       throw new Error('GameLayout requires a valid root element');
@@ -1640,19 +1754,28 @@ export class GameLayout {
     this.scenarioTitle = this.requireElement('[data-role="scenario-title"]');
     this.characterStats = this.requireElement('[data-role="character-stats"]');
     this.logPanel = this.requireElement('[data-panel="log"]');
-    this.handPanel = this.requireElement('[data-panel="hand"]');
-    this.eventPanel = this.requireElement('[data-panel="event"]');
+    this.interactionPanel = this.requireElement('[data-panel="interaction"]');
+    this.storyView = this.requireElement('[data-view="story"]');
+    this.playerView = this.requireElement('[data-view="player"]');
+    this.eventView = this.requireElement('[data-view="event"]');
+    this.storyTitle = this.requireElement('[data-role="story-title"]');
+    this.storyBody = this.requireElement('[data-role="story-text"]');
+    this.eventCard = this.requireElement('[data-role="event-card"]');
     this.eventTitle = this.requireElement('[data-role="event-title"]');
     this.eventFlavor = this.requireElement('[data-role="event-flavor"]');
     this.eventEffect = this.requireElement('[data-role="event-effect"]');
     this.eventChoices = this.requireElement('[data-role="event-choices"]');
     this.eventDeck = this.requireElement('[data-role="event-deck"]');
+    this.eventResult = this.requireElement('[data-role="event-result"]');
+    this.eventResultTitle = this.requireElement('[data-role="event-result-title"]');
+    this.eventResultBody = this.requireElement('[data-role="event-result-body"]');
     this.logEntries = this.requireElement<HTMLDivElement>('[data-role="log-entries"]');
     this.soundToggle = this.requireElement<HTMLButtonElement>('[data-action="toggle-sound"]');
     this.newGameButton = this.requireElement<HTMLButtonElement>('[data-action="new-game"]');
     this.settingsButton = this.requireElement<HTMLButtonElement>('[data-action="settings"]');
     this.logAdvanceButton = this.requireElement<HTMLButtonElement>('[data-action="advance-log"]');
     this.endTurnButton = this.requireElement<HTMLButtonElement>('[data-action="end-turn"]');
+    this.eventContinueButton = this.requireElement<HTMLButtonElement>('[data-action="complete-event"]');
 
     this.enableTooltipToggles();
     this.enableTooltipPositioning();
@@ -1661,6 +1784,7 @@ export class GameLayout {
     this.soundToggle.addEventListener('click', this.handleSoundToggleClick);
     this.logAdvanceButton.addEventListener('click', this.handleAdvanceLogClick);
     this.endTurnButton.addEventListener('click', this.handleEndTurnClick);
+    this.eventContinueButton.addEventListener('click', this.handleCompleteEventClick);
     this.root.addEventListener('click', this.handleRootCommand);
   }
 
@@ -1683,10 +1807,9 @@ export class GameLayout {
     this.renderWorldTracks(state.worldTracks);
     this.renderCharacterStats(state.characterStats);
     this.renderEvent(state);
+    this.renderInteractionStage(state);
     this.renderLog(state.log, state.autoScrollLog);
     this.updateSoundToggle(state.soundEnabled);
-    this.renderJournalControls(state.journalScript);
-    this.renderEndTurnButton(state);
     this.updateGuidanceHighlights(state);
   }
 
@@ -2031,32 +2154,31 @@ export class GameLayout {
 
   private renderEvent(state: GameState): void {
     const event = state.event;
-    this.eventPanel.setAttribute('data-event-tone', event.type ?? 'mystery');
+    const tone = event.type ?? 'mystery';
+    this.interactionPanel.setAttribute('data-event-tone', tone);
+    this.eventCard.setAttribute('data-event-tone', tone);
     this.eventTitle.textContent = event.title;
     this.eventFlavor.textContent = event.flavor;
     this.eventEffect.textContent = event.effect;
-    this.renderEventChoices(event, state.loopStage, state.eventResolutionPending);
+    const eventActive = state.loopStage === 'event' && !state.gameOutcome;
+    const awaitingChoice = eventActive && state.eventResolutionPending;
+    this.eventChoices.classList.toggle('is-hidden', !awaitingChoice);
+    this.renderEventChoices(event, awaitingChoice);
     this.renderEventDeck(state.decks.event);
   }
 
-  private renderEventChoices(
-    event: GameState['event'],
-    loopStage: GameState['loopStage'],
-    awaitingChoice: boolean,
-  ): void {
+  private renderEventChoices(event: GameState['event'], awaitingChoice: boolean): void {
     this.eventChoices.innerHTML = '';
+    if (!awaitingChoice) {
+      return;
+    }
+
     const choices = event.choices ?? [];
 
     if (!choices.length) {
       const placeholder = document.createElement('p');
       placeholder.className = 'woh-event-empty';
-      if (loopStage === 'event' && awaitingChoice) {
-        placeholder.textContent = 'Сделайте выбор, чтобы продолжить.';
-      } else if (loopStage === 'event') {
-        placeholder.textContent = 'Эффект разыгрывается автоматически.';
-      } else {
-        placeholder.textContent = 'Дождитесь конца хода, чтобы раскрыть новое событие.';
-      }
+      placeholder.textContent = 'Событие разыгрывается автоматически.';
       this.eventChoices.append(placeholder);
       return;
     }
@@ -2099,6 +2221,54 @@ export class GameLayout {
     next.textContent = `Следующее: ${deck.next ?? 'скрыто'}`;
 
     this.eventDeck.append(draw, discard, next);
+  }
+
+  private renderInteractionStage(state: GameState): void {
+    const storyActive = state.loopStage === 'story' && this.hasPendingJournalEntry(state.journalScript);
+    const eventActive = state.loopStage === 'event' && !state.gameOutcome;
+    const stage = storyActive ? 'story' : eventActive ? 'event' : 'player';
+    this.interactionPanel.setAttribute('data-stage', stage);
+    this.storyView.classList.toggle('is-active', storyActive);
+    this.playerView.classList.toggle('is-active', stage === 'player');
+    this.eventView.classList.toggle('is-active', eventActive);
+    this.renderStoryPrompt(state.journalScript, storyActive);
+    this.renderEventResolution(state, eventActive);
+    this.renderEndTurnButton(state, stage === 'player');
+  }
+
+  private renderStoryPrompt(script: GameState['journalScript'], active: boolean): void {
+    const hasNext = this.hasPendingJournalEntry(script);
+    const entry = hasNext ? script.entries[script.nextIndex] : null;
+    if (active && entry) {
+      this.storyTitle.textContent = entry.type;
+      this.storyBody.textContent = entry.body;
+    } else if (active && !entry) {
+      this.storyTitle.textContent = 'Пролог завершён';
+      this.storyBody.textContent = 'Приготовьтесь к своему первому ходу.';
+    } else if (!active) {
+      this.storyTitle.textContent = '';
+      this.storyBody.textContent = '';
+    }
+
+    const canAdvance = active && Boolean(entry);
+    this.logAdvanceButton.disabled = !canAdvance;
+    this.logAdvanceButton.classList.toggle('is-hidden', !canAdvance);
+  }
+
+  private renderEventResolution(state: GameState, eventActive: boolean): void {
+    const summary = state.eventResolutionSummary;
+    const showResult = eventActive && !state.eventResolutionPending && Boolean(summary);
+    if (showResult && summary) {
+      this.eventResultTitle.textContent = summary.title;
+      this.eventResultBody.textContent = summary.body;
+    } else {
+      this.eventResultTitle.textContent = '';
+      this.eventResultBody.textContent = '';
+    }
+
+    this.eventResult.classList.toggle('is-hidden', !showResult);
+    this.eventContinueButton.classList.toggle('is-hidden', !showResult);
+    this.eventContinueButton.disabled = !showResult;
   }
 
   private renderLog(log: GameState['log'], autoScroll: boolean): void {
@@ -2145,18 +2315,11 @@ export class GameLayout {
     this.lastRenderedLogSize = log.length;
   }
 
-  private renderJournalControls(script: GameState['journalScript']): void {
-    const hasNext = this.hasPendingJournalEntry(script);
-    this.logAdvanceButton.disabled = !hasNext;
-    this.logAdvanceButton.classList.toggle('is-hidden', !hasNext);
-  }
-
-  private renderEndTurnButton(state: GameState): void {
-    const introActive = state.loopStage === 'story' && this.hasPendingJournalEntry(state.journalScript);
-    this.endTurnButton.classList.toggle('is-hidden', introActive);
-    const disabled =
-      state.loopStage !== 'player' || !state.journalScript.completed || Boolean(state.gameOutcome);
-    this.endTurnButton.disabled = disabled;
+  private renderEndTurnButton(state: GameState, playerStageActive: boolean): void {
+    const visible =
+      playerStageActive && state.loopStage === 'player' && state.journalScript.completed && !state.gameOutcome;
+    this.endTurnButton.classList.toggle('is-hidden', !visible);
+    this.endTurnButton.disabled = !visible;
   }
 
   private hasPendingJournalEntry(script: GameState['journalScript']): boolean {
@@ -2165,13 +2328,14 @@ export class GameLayout {
 
   private updateGuidanceHighlights(state: GameState): void {
     const needsJournal = state.loopStage === 'story' && this.hasPendingJournalEntry(state.journalScript);
-    this.logPanel.classList.toggle('woh-panel--pulse-journal', needsJournal);
+    this.logPanel.classList.remove('woh-panel--pulse-journal');
+    this.interactionPanel.classList.toggle('woh-panel--pulse-journal', needsJournal);
 
     const playerPhaseActive = state.loopStage === 'player' && !state.gameOutcome;
-    this.handPanel.classList.toggle('woh-panel--pulse-hand', playerPhaseActive);
+    this.interactionPanel.classList.toggle('woh-panel--pulse-hand', playerPhaseActive);
 
     const eventPhaseActive = state.loopStage === 'event' && !state.gameOutcome;
-    this.eventPanel.classList.toggle('woh-panel--pulse-event', eventPhaseActive);
+    this.interactionPanel.classList.toggle('woh-panel--pulse-event', eventPhaseActive);
   }
 
   private updateSoundToggle(enabled: boolean): void {

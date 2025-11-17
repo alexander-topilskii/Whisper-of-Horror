@@ -210,6 +210,12 @@ export interface JournalScriptState {
   completed: boolean;
 }
 
+export interface EventResolutionSummary {
+  title: string;
+  body: string;
+  variant?: LogEntryVariant;
+}
+
 export interface GameState {
   turn: TurnState;
   decks: DeckCollectionState;
@@ -231,6 +237,7 @@ export interface GameState {
   modifiers: CardModifierState[];
   loopStage: "story" | "player" | "event" | "finished";
   eventResolutionPending: boolean;
+  eventResolutionSummary: EventResolutionSummary | null;
   gameOutcome: "victory" | "defeat" | null;
   autoScrollLog: boolean;
   soundEnabled: boolean;
