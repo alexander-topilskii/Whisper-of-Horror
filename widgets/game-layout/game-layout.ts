@@ -498,17 +498,6 @@ function ensureStyles() {
       isolation: isolate;
     }
 
-    .woh-stat-card::after {
-      content: "";
-      position: absolute;
-      inset: -20% -30% auto auto;
-      width: 120px;
-      height: 120px;
-      background: ${colors.statCardAura};
-      transform: translate(40%, -40%);
-      pointer-events: none;
-    }
-
     .woh-stat-title {
       font-size: 0.78rem;
       letter-spacing: 0.14em;
