@@ -5,6 +5,7 @@ export interface RawEventOptionEffect {
   sanity?: number;
   omen?: number;
   wound?: number;
+  cold?: number;
 }
 
 export interface RawEventOption {
@@ -51,6 +52,10 @@ function normalizeOptionEffect(effect: RawEventOptionEffect | undefined): EventC
 
   if (typeof effect.omen === "number" && effect.omen !== 0) {
     normalized.doomDelta = effect.omen;
+  }
+
+  if (typeof effect.cold === "number" && effect.cold !== 0) {
+    normalized.coldDelta = effect.cold;
   }
 
   return Object.keys(normalized).length ? normalized : undefined;

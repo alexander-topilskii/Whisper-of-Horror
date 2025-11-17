@@ -14,6 +14,7 @@ function createState(): GameState {
     worldTracks: [
       { id: "doom", label: "Doom", value: 2, max: 10, type: "doom" },
       { id: "victory", label: "Victory", value: 5, max: 10, type: "victory" },
+      { id: "cold", label: "Холод", value: 0, max: 3, type: "generic" },
     ],
     characterStats: [{ id: "will", label: "Will", value: 1, max: 6 }],
     statuses: [],
@@ -77,6 +78,19 @@ describe("applyEventChoiceEffects", () => {
     expect(state.log[0]).toMatchObject({
       type: "[Тревога]",
       body: "Шум привлекает внимание. Уровень ужаса растёт на 2.",
+    });
+  });
+
+  it("intensifies cold exposure when coldDelta is applied", () => {
+    const state = createState();
+    const logDescriptor = applyEventChoiceEffects(state, { coldDelta: 2 });
+
+    expect(logDescriptor).toEqual({ type: "[Событие]" });
+    expect(state.worldTracks.find((track: TrackState) => track.id === "cold")?.value).toBe(2);
+    expect(state.log).toHaveLength(1);
+    expect(state.log[0]).toMatchObject({
+      type: "[Холод]",
+      body: "Холод усиливается. Изменение: +2.",
     });
   });
 

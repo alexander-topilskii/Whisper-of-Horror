@@ -95,6 +95,7 @@ export interface EventChoiceEffect {
   logVariant?: LogEntryVariant;
   doomDelta?: number;
   victoryDelta?: number;
+   coldDelta?: number;
   statDeltas?: StatDelta[];
   actionsDelta?: number;
   cluesGained?: number;

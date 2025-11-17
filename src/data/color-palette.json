@@ -58,6 +58,8 @@
     "trackVictoryShadow": "rgba(150, 222, 199, 0.35)",
     "trackDoomGradient": "linear-gradient(90deg, rgba(120, 42, 42, 0.6) 0%, rgba(182, 94, 78, 0.9) 100%)",
     "trackDoomShadow": "rgba(140, 51, 48, 0.45)",
+    "trackColdGradient": "linear-gradient(90deg, rgba(82, 132, 168, 0.65) 0%, rgba(176, 230, 255, 0.9) 100%)",
+    "trackColdShadow": "rgba(118, 180, 210, 0.4)",
     "trackMark": "rgba(173, 217, 209, 0.4)",
     "trackMarkCritical": "rgba(255, 172, 120, 0.6)",
     "panelSectionBorder": "rgba(70, 74, 86, 0.45)",

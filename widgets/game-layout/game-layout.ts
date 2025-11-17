@@ -480,6 +480,11 @@ function ensureStyles() {
       box-shadow: 0 0 16px ${colors.trackDoomShadow};
     }
 
+    .woh-track--generic .woh-track-progress {
+      background: ${colors.trackColdGradient};
+      box-shadow: 0 0 12px ${colors.trackColdShadow};
+    }
+
     .woh-track-marks {
       position: absolute;
       inset: 0;

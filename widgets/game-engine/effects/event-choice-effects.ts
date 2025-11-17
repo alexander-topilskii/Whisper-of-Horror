@@ -89,6 +89,24 @@ const defaultEventChoiceEffectHandlers: EventChoiceEffectHandlerMap = {
       "effect",
     );
   },
+  coldDelta: (state, delta) => {
+    if (!delta) {
+      return;
+    }
+
+    adjustTrack(state, "cold", delta);
+    const track = state.worldTracks.find((item) => item.id === "cold");
+    const label = track?.label ?? "Холод";
+    const direction = delta > 0 ? "усиливается" : "ослабевает";
+    const amount = Math.abs(delta);
+    const prefix = delta > 0 ? "+" : "-";
+    pushLogEntry(
+      state,
+      "[Холод]",
+      `${label} ${direction}. Изменение: ${prefix}${amount}.`,
+      "effect",
+    );
+  },
 };
 
 export function applyEventChoiceEffects(

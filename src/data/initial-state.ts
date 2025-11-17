@@ -148,6 +148,14 @@ initialState.worldTracks = [
     type: "doom",
     criticalThreshold: fail?.requiredAmount ?? undefined,
   },
+  {
+    id: "cold",
+    label: "Холод",
+    value: 0,
+    max: 3,
+    type: "generic",
+    criticalThreshold: 3,
+  },
 ];
 
 export default initialState;
