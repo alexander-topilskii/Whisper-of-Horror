@@ -1068,11 +1068,11 @@ function ensureStyles() {
         order: 2;
       }
 
-      .woh-column--center {
+      .woh-column--right {
         order: 3;
       }
 
-      .woh-column--right {
+      .woh-column--center {
         order: 4;
       }
     }
@@ -1457,6 +1457,18 @@ const TEMPLATE = `
           <div class="woh-hand" role="list" data-role="hand"></div>
         </article>
       </section>
+      <section class="woh-column woh-column--right">
+        <article class="woh-panel woh-panel--glass woh-panel--events woh-event-card" data-panel="event">
+          <h2 class="woh-panel-title">События</h2>
+          <div class="woh-event-main">
+            <div class="woh-event-title" data-role="event-title"></div>
+            <div class="woh-event-flavor" data-role="event-flavor"></div>
+            <div class="woh-event-effect" data-role="event-effect"></div>
+            <div class="woh-event-choices" data-role="event-choices"></div>
+          </div>
+          <div class="woh-event-deck" data-role="event-deck"></div>
+        </article>
+      </section>
       <section class="woh-column woh-column--center">
         <article class="woh-panel">
           <div class="woh-panel-header">
@@ -1482,18 +1494,6 @@ const TEMPLATE = `
             <h3 class="woh-subpanel-title">Состояния</h3>
             <div class="woh-effects" data-role="status-effects"></div>
           </div>
-        </article>
-      </section>
-      <section class="woh-column woh-column--right">
-        <article class="woh-panel woh-panel--glass woh-panel--events woh-event-card" data-panel="event">
-          <h2 class="woh-panel-title">События</h2>
-          <div class="woh-event-main">
-            <div class="woh-event-title" data-role="event-title"></div>
-            <div class="woh-event-flavor" data-role="event-flavor"></div>
-            <div class="woh-event-effect" data-role="event-effect"></div>
-            <div class="woh-event-choices" data-role="event-choices"></div>
-          </div>
-          <div class="woh-event-deck" data-role="event-deck"></div>
         </article>
       </section>
     </div>
