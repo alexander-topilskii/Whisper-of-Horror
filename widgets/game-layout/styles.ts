@@ -412,6 +412,7 @@ const STYLES = `
       scrollbar-width: thin;
       scroll-snap-type: x proximity;
       -webkit-overflow-scrolling: touch;
+      position: relative;
     }
 
     .woh-hand-play-summary {
@@ -487,6 +488,38 @@ const STYLES = `
 
     .woh-hand-card[data-playable="false"] {
       filter: grayscale(0.4) brightness(0.75);
+    }
+
+    .woh-hand-card--shake {
+      animation: woh-hand-card-shake 0.45s ease;
+      box-shadow: 0 0 18px ${colors.statDamageParticle};
+    }
+
+    .woh-hand-card-ghost {
+      position: fixed;
+      top: 0;
+      left: 0;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      opacity: 0.95;
+      z-index: 50;
+      animation-duration: 1s;
+      animation-fill-mode: forwards;
+      background: ${colors.handCardBackground};
+      border: 1px solid ${colors.handCardHoverBorder};
+      box-shadow: 0 12px 24px ${colors.handCardShadow};
+    }
+
+    .woh-hand-card-ghost[data-result='success'] {
+      box-shadow: 0 0 20px ${colors.statHealParticle}, 0 0 50px ${colors.statHealParticle};
+      border-color: ${colors.statHealText};
+      animation-name: woh-hand-card-success;
+    }
+
+    .woh-hand-card-ghost[data-result='fail'] {
+      box-shadow: 0 0 20px ${colors.statDamageParticle}, 0 0 50px ${colors.statDamageParticle};
+      border-color: ${colors.statDamageText};
+      animation-name: woh-hand-card-fail;
     }
 
     .woh-card-title {
@@ -705,6 +738,64 @@ const STYLES = `
       }
       50% {
         box-shadow: 0 0 12px 6px ${colors.statCriticalPulseInner};
+      }
+    }
+
+    @keyframes woh-hand-card-shake {
+      0% {
+        transform: translateX(0);
+      }
+
+      25% {
+        transform: translateX(-6px);
+      }
+
+      50% {
+        transform: translateX(6px);
+      }
+
+      75% {
+        transform: translateX(-4px);
+      }
+
+      100% {
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes woh-hand-card-success {
+      0% {
+        opacity: 0.95;
+        transform: translate(-50%, -50%) scale(1);
+      }
+
+      40% {
+        transform: translate(-50%, -70%) scale(1.05);
+      }
+
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -115%) scale(0.92);
+      }
+    }
+
+    @keyframes woh-hand-card-fail {
+      0% {
+        opacity: 0.95;
+        transform: translate(-50%, -50%) rotate(0deg);
+      }
+
+      30% {
+        transform: translate(calc(-50% - 6px), calc(-50% + 8px)) rotate(-3deg);
+      }
+
+      60% {
+        transform: translate(calc(-50% + 6px), calc(-50% + 12px)) rotate(3deg);
+      }
+
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -15%) rotate(6deg);
       }
     }
 

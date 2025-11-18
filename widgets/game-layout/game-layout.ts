@@ -16,6 +16,13 @@ import { injectGameLayoutStyles, statMeterPresets } from "./styles";
 type StatChangeVariant = "heal" | "damage";
 type TooltipDelegate = (element: HTMLElement, tooltip?: string) => void;
 
+type CardSnapshot = {
+  cardId: string;
+  rect: DOMRect;
+};
+
+type LastCardPlay = NonNullable<GameState['lastCardPlay']>;
+
 function expectElement<T extends Element>(root: ParentNode, selector: string): T {
   const element = root.querySelector<T>(selector);
   if (!element) {
@@ -380,6 +387,8 @@ class InteractionView {
   private readonly eventResultBody: HTMLElement;
   private readonly endingTitle: HTMLElement;
   private readonly endingText: HTMLElement;
+  private lastRenderedCardPlayId: string | null = null;
+  private pendingCardSnapshot: CardSnapshot | null = null;
 
   public readonly logAdvanceButton: HTMLButtonElement;
   public readonly endTurnButton: HTMLButtonElement;
@@ -426,6 +435,22 @@ class InteractionView {
     this.renderPlayerDeck(decks);
     this.renderHand(hand);
     this.renderLastCardPlay(lastPlay);
+  }
+
+  public captureCardSnapshot(cardId: string, element: HTMLElement): void {
+    const rect = element.getBoundingClientRect();
+    this.pendingCardSnapshot = { cardId, rect };
+  }
+
+  public indicateInsufficientActions(element: HTMLElement): void {
+    element.classList.remove('woh-hand-card--shake');
+    void element.offsetWidth;
+    element.classList.add('woh-hand-card--shake');
+    element.addEventListener(
+      'animationend',
+      () => element.classList.remove('woh-hand-card--shake'),
+      { once: true },
+    );
   }
 
   public renderEvent(state: GameState): void {
@@ -553,6 +578,7 @@ class InteractionView {
     this.cardPlaySummary.innerHTML = '';
     if (!lastPlay) {
       this.cardPlaySummary.classList.add('is-hidden');
+      this.animateCardPlayOutcome(null);
       return;
     }
 
@@ -576,6 +602,69 @@ class InteractionView {
     body.textContent = lastPlay.description;
 
     this.cardPlaySummary.append(header, body);
+    this.animateCardPlayOutcome(lastPlay);
+  }
+
+  private animateCardPlayOutcome(lastPlay: GameState['lastCardPlay'] | null): void {
+    if (!lastPlay) {
+      this.lastRenderedCardPlayId = null;
+      this.pendingCardSnapshot = null;
+      return;
+    }
+
+    if (this.lastRenderedCardPlayId === lastPlay.id) {
+      return;
+    }
+
+    this.lastRenderedCardPlayId = lastPlay.id;
+    this.spawnCardPlayGhost(lastPlay);
+  }
+
+  private spawnCardPlayGhost(lastPlay: LastCardPlay): void {
+    const ghost = document.createElement('div');
+    ghost.className = 'woh-hand-card woh-hand-card-ghost';
+    ghost.dataset.result = lastPlay.outcome;
+
+    const title = document.createElement('div');
+    title.className = 'woh-card-title';
+    title.textContent = lastPlay.name;
+    ghost.append(title);
+
+    if (lastPlay.description) {
+      const description = document.createElement('div');
+      description.className = 'woh-card-description';
+      description.textContent = lastPlay.description;
+      ghost.append(description);
+    }
+
+    const snapshot = this.consumeSnapshotFor(lastPlay.id);
+    const anchorRect = snapshot?.rect ?? this.handList.getBoundingClientRect();
+    const referenceCard = snapshot
+      ? null
+      : this.handList.querySelector<HTMLElement>('.woh-hand-card');
+    const fallbackWidth = referenceCard?.getBoundingClientRect().width ?? 140;
+    const fallbackHeight = referenceCard?.getBoundingClientRect().height ?? 200;
+    const width = snapshot?.rect.width ?? fallbackWidth;
+    const height = snapshot?.rect.height ?? fallbackHeight;
+    const left = snapshot ? snapshot.rect.left + snapshot.rect.width / 2 : anchorRect.left + anchorRect.width / 2;
+    const top = snapshot ? snapshot.rect.top + snapshot.rect.height / 2 : anchorRect.top + anchorRect.height / 2;
+
+    ghost.style.width = `${Math.round(width)}px`;
+    ghost.style.height = `${Math.round(height)}px`;
+    ghost.style.left = `${left}px`;
+    ghost.style.top = `${top}px`;
+
+    document.body.append(ghost);
+    ghost.addEventListener('animationend', () => ghost.remove(), { once: true });
+  }
+
+  private consumeSnapshotFor(cardId: string): CardSnapshot | null {
+    if (this.pendingCardSnapshot?.cardId !== cardId) {
+      return null;
+    }
+    const snapshot = this.pendingCardSnapshot;
+    this.pendingCardSnapshot = null;
+    return snapshot;
   }
 
   private renderEventChoices(event: GameState['event'], awaitingChoice: boolean): void {
@@ -731,6 +820,14 @@ export class GameLayout {
     if (command === 'play-card') {
       const cardId = target.dataset.cardId;
       if (cardId) {
+        const state = this.engine.getState();
+        const card = state.hand.find((handCard) => handCard.id === cardId);
+        const actionCost = card?.actionCost ?? 1;
+        if (card && card.playable && state.turn.actions.remaining >= actionCost) {
+          this.interactionView.captureCardSnapshot(cardId, target);
+        } else if (card && state.turn.actions.remaining < actionCost) {
+          this.interactionView.indicateInsufficientActions(target);
+        }
         this.engine.dispatch(new PlayCardCommand(cardId));
       }
       return;
