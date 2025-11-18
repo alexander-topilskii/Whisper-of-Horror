@@ -75,6 +75,28 @@ const fail = firstTask?.technicalFailCondition;
 
 const tutorialEntries: JournalScriptEntry[] = [];
 
+function normalizeScenarioIllustration(path?: string | null): string | undefined {
+  if (!path) {
+    return undefined;
+  }
+
+  const trimmed = path.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:') || trimmed.startsWith('//')) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith('/')) {
+    return trimmed;
+  }
+
+  const normalized = trimmed.replace(/^\.\//, '').replace(/^src\//, '');
+  return `/${normalized}`;
+}
+
 function appendScenarioMessagesToLog(state: GameState) {
   const scenario = state.scenario;
   if (!scenario) {
@@ -85,7 +107,14 @@ function appendScenarioMessagesToLog(state: GameState) {
   if (intro?.flavor?.length) {
     const introType = `[Пролог] ${intro.title ?? scenario.title ?? "Сценарий"}`;
     const introBody = intro.flavor.join("\n\n");
-    tutorialEntries.push({ id: "scenario-intro", type: introType, body: introBody, variant: "story" });
+    const introIllustration = normalizeScenarioIllustration(intro.flavor_img);
+    tutorialEntries.push({
+      id: "scenario-intro",
+      type: introType,
+      body: introBody,
+      variant: "story",
+      illustration: introIllustration,
+    });
   }
 
   const task = scenario.firstTask;
@@ -98,11 +127,13 @@ function appendScenarioMessagesToLog(state: GameState) {
     if (task.failCondition) {
       summaryParts.push(`Провал: ${task.failCondition}`);
     }
+    const taskIllustration = normalizeScenarioIllustration(task.flavor_img);
     tutorialEntries.push({
       id: task.id ?? "scenario-task",
       type: taskType,
       body: summaryParts.filter(Boolean).join("\n"),
       variant: "story",
+      illustration: taskIllustration,
     });
   }
 }

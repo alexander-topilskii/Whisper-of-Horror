@@ -376,6 +376,8 @@ class InteractionView {
   private readonly cardPlaySummary: HTMLElement;
   private readonly storyTitle: HTMLElement;
   private readonly storyBody: HTMLElement;
+  private readonly storyIllustrationFrame: HTMLElement;
+  private readonly storyIllustration: HTMLImageElement;
   private readonly eventCard: HTMLElement;
   private readonly eventTitle: HTMLElement;
   private readonly eventFlavor: HTMLElement;
@@ -408,6 +410,8 @@ class InteractionView {
     this.cardPlaySummary = expectElement(host, '[data-role="card-play-summary"]');
     this.storyTitle = expectElement(host, '[data-role="story-title"]');
     this.storyBody = expectElement(host, '[data-role="story-text"]');
+    this.storyIllustrationFrame = expectElement(host, '[data-role="story-illustration"]');
+    this.storyIllustration = expectElement(host, '[data-role="story-illustration-img"]');
     this.eventCard = expectElement(host, '[data-role="event-card"]');
     this.eventTitle = expectElement(host, '[data-role="event-title"]');
     this.eventFlavor = expectElement(host, '[data-role="event-flavor"]');
@@ -729,12 +733,15 @@ class InteractionView {
     if (active && entry) {
       this.storyTitle.textContent = entry.type;
       this.storyBody.textContent = entry.body;
+      this.updateStoryIllustration(entry.illustration, entry.type);
     } else if (active && !entry) {
       this.storyTitle.textContent = 'Пролог завершён';
       this.storyBody.textContent = 'Приготовьтесь к своему первому ходу.';
+      this.updateStoryIllustration(undefined);
     } else if (!active) {
       this.storyTitle.textContent = '';
       this.storyBody.textContent = '';
+      this.updateStoryIllustration(undefined);
     }
 
     const canAdvance = active && Boolean(entry);
@@ -793,6 +800,19 @@ class InteractionView {
 
   private hasPendingJournalEntry(script: GameState['journalScript']): boolean {
     return !script.completed && script.nextIndex < script.entries.length;
+  }
+
+  private updateStoryIllustration(src?: string, label?: string): void {
+    if (src) {
+      this.storyIllustration.src = src;
+      this.storyIllustration.alt = label ?? 'Иллюстрация сцены';
+      this.storyIllustrationFrame.classList.remove('is-hidden');
+      return;
+    }
+
+    this.storyIllustration.removeAttribute('src');
+    this.storyIllustration.alt = '';
+    this.storyIllustrationFrame.classList.add('is-hidden');
   }
 }
 

@@ -177,6 +177,7 @@ export interface ScenarioIntroState {
   title: string;
   type: string;
   flavor: string[];
+  flavor_img?: string;
 }
 
 export interface ScenarioTaskConditionState {
@@ -195,12 +196,14 @@ export interface ScenarioTaskState {
   flavor: string;
   failCondition: string;
   technicalFailCondition: ScenarioTaskConditionState;
+  flavor_img?: string;
 }
 
 export interface ScenarioEndingState {
   id: string;
   title: string;
   text: string;
+  flavor_img?: string;
 }
 
 export interface ScenarioState {
@@ -216,6 +219,7 @@ export interface JournalScriptEntry {
   type: string;
   body: string;
   variant?: LogEntryVariant;
+  illustration?: string;
 }
 
 export interface JournalScriptState {
