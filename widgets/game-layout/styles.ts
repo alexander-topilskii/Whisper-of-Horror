@@ -313,8 +313,8 @@ const STYLES = `
       box-shadow: 0 14px 24px ${colors.panelGlassDropShadow};
       overflow: hidden;
       display: block;
-      min-height: 220px;
-      max-height: 320px;
+      width: 100%;
+      aspect-ratio: 1 / 1;
     }
 
     .woh-story-illustration.is-hidden {
