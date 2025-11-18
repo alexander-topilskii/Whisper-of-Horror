@@ -19,6 +19,7 @@ function createEventState(): GameState {
       event: { draw: 0, discard: 0, next: null, drawPile: [], discardPile: [] },
     },
     hand: [],
+    lastCardPlay: null,
     phase: { icon: "", name: "", subtitle: "" },
     worldTracks: [
       { id: "doom", label: "Ужас", value: 0, max: 6, type: "doom" },
