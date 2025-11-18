@@ -8,6 +8,22 @@ import type { CardDefinition, GameState, JournalScriptEntry } from "../../widget
 import { normalizeEventDeck, type RawEventCard } from "./normalize-event-cards";
 import { createEventPlaceholder } from "./event-placeholder";
 
+const baseAssetUrl: string = import.meta.env?.BASE_URL ?? "/";
+
+function resolveAssetPath(path: string): string {
+  const sanitizedPath = path.replace(/^\/+/u, "");
+  if (!sanitizedPath) {
+    return path;
+  }
+
+  const normalizedBase = baseAssetUrl.endsWith("/") ? baseAssetUrl : `${baseAssetUrl}/`;
+  if (normalizedBase === "/") {
+    return `/${sanitizedPath}`;
+  }
+
+  return `${normalizedBase}${sanitizedPath}`;
+}
+
 const initialState = {
   ...worldSettings,
   ...characterSettings,
@@ -90,11 +106,11 @@ function normalizeScenarioIllustration(path?: string | null): string | undefined
   }
 
   if (trimmed.startsWith('/')) {
-    return trimmed;
+    return resolveAssetPath(trimmed);
   }
 
   const normalized = trimmed.replace(/^\.\//, '').replace(/^src\//, '');
-  return `/${normalized}`;
+  return resolveAssetPath(`/${normalized}`);
 }
 
 function appendScenarioMessagesToLog(state: GameState) {
