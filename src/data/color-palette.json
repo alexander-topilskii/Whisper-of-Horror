@@ -146,24 +146,24 @@
     "logEntryTypeText": "rgba(160, 198, 189, 0.6)",
     "logEntryVariants": {
       "story": {
-        "background": "rgba(18, 46, 36, 0.92)",
-        "border": "rgba(90, 158, 126, 0.55)",
-        "glow": "rgba(64, 140, 105, 0.35)"
+        "background": "rgba(42, 44, 54, 0.9)",
+        "border": "rgba(112, 118, 138, 0.5)",
+        "glow": "rgba(94, 102, 120, 0.35)"
       },
       "player": {
-        "background": "rgba(20, 42, 70, 0.9)",
-        "border": "rgba(94, 152, 204, 0.55)",
-        "glow": "rgba(70, 140, 210, 0.35)"
+        "background": "rgba(42, 44, 54, 0.9)",
+        "border": "rgba(112, 118, 138, 0.5)",
+        "glow": "rgba(94, 102, 120, 0.35)"
       },
       "system": {
-        "background": "rgba(32, 34, 40, 0.85)",
-        "border": "rgba(118, 124, 140, 0.55)",
-        "glow": "rgba(132, 138, 156, 0.35)"
+        "background": "rgba(42, 44, 54, 0.9)",
+        "border": "rgba(112, 118, 138, 0.5)",
+        "glow": "rgba(94, 102, 120, 0.35)"
       },
       "effect": {
-        "background": "rgba(58, 22, 30, 0.92)",
-        "border": "rgba(198, 92, 96, 0.6)",
-        "glow": "rgba(214, 102, 112, 0.35)"
+        "background": "rgba(42, 44, 54, 0.9)",
+        "border": "rgba(112, 118, 138, 0.5)",
+        "glow": "rgba(94, 102, 120, 0.35)"
       }
     }
   }
