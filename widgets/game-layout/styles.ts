@@ -288,9 +288,44 @@ const STYLES = `
 
     .woh-story-card {
       padding: 24px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(160px, 0.65fr);
+      gap: 24px;
+      align-items: stretch;
+    }
+
+    .woh-story-content {
       display: flex;
       flex-direction: column;
       gap: 16px;
+      min-height: 0;
+    }
+
+    .woh-story-content .woh-button {
+      margin-top: auto;
+    }
+
+    .woh-story-illustration {
+      margin: 0;
+      border-radius: 16px;
+      border: 1px solid ${colors.panelBorderStrong};
+      background: ${colors.panelSurfaceAlt};
+      box-shadow: 0 14px 24px ${colors.panelGlassDropShadow};
+      overflow: hidden;
+      display: block;
+      min-height: 220px;
+      max-height: 320px;
+    }
+
+    .woh-story-illustration.is-hidden {
+      display: none;
+    }
+
+    .woh-story-illustration img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
 
     .woh-ending-card {
@@ -1295,6 +1330,10 @@ const STYLES = `
       .woh-column--center {
         order: 2;
       }
+
+      .woh-story-card {
+        grid-template-columns: 1fr;
+      }
     }
 
     @media (max-width: 720px) {
@@ -1316,6 +1355,10 @@ const STYLES = `
 
       .woh-turn-summary-items {
         width: 100%;
+      }
+
+      .woh-story-illustration {
+        max-height: none;
       }
     }
 

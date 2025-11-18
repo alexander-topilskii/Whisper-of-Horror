@@ -28,10 +28,15 @@ const TEMPLATE = `
           <div class="woh-interaction-stage">
             <div class="woh-interaction-view woh-interaction-view--story is-active" data-view="story">
               <div class="woh-story-card">
-                <h2 class="woh-panel-title">Пролог</h2>
-                <div class="woh-story-type" data-role="story-title"></div>
-                <p class="woh-story-text" data-role="story-text"></p>
-                <button class="woh-button woh-button--full" type="button" data-action="advance-log">Далее</button>
+                <div class="woh-story-content">
+                  <h2 class="woh-panel-title">Пролог</h2>
+                  <div class="woh-story-type" data-role="story-title"></div>
+                  <p class="woh-story-text" data-role="story-text"></p>
+                  <button class="woh-button woh-button--full" type="button" data-action="advance-log">Далее</button>
+                </div>
+                <figure class="woh-story-illustration is-hidden" data-role="story-illustration">
+                  <img alt="" data-role="story-illustration-img" />
+                </figure>
               </div>
             </div>
             <div class="woh-interaction-view woh-interaction-view--player" data-view="player">
