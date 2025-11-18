@@ -133,7 +133,7 @@ const STYLES = `
 
     .woh-main {
       display: grid;
-      grid-template-columns: 0.85fr 1.1fr 1.2fr;
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
       gap: 24px;
       padding: 24px 32px;
       overflow: hidden;
@@ -147,11 +147,17 @@ const STYLES = `
       min-height: 0;
     }
 
-    .woh-column--log .woh-panel {
+    .woh-column--log {
+      min-height: 0;
+    }
+
+    .woh-column--log [data-panel='log'] {
       display: flex;
       flex-direction: column;
       gap: 12px;
-      min-height: 100%;
+      flex: 1;
+      min-height: 0;
+      box-shadow: inset 0 0 0 1px ${colors.panelGlassInnerHighlight};
     }
 
     .woh-panel {
@@ -1276,16 +1282,6 @@ const STYLES = `
       opacity: 0.7;
     }
 
-    @media (max-width: 1280px) {
-      .woh-main {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .woh-column--log {
-        grid-column: 1 / -1;
-      }
-    }
-
     @media (max-width: 900px) {
       .woh-main {
         grid-template-columns: 1fr;
@@ -1296,12 +1292,8 @@ const STYLES = `
         order: 1;
       }
 
-      .woh-column--interaction {
-        order: 2;
-      }
-
       .woh-column--center {
-        order: 3;
+        order: 2;
       }
     }
 

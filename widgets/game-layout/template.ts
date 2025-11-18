@@ -20,16 +20,6 @@ const TEMPLATE = `
     </header>
     <div class="woh-main">
       <section class="woh-column woh-column--log">
-        <article class="woh-panel" data-panel="log">
-          <div class="woh-panel-header">
-            <h2 class="woh-panel-title">Журнал хода</h2>
-          </div>
-          <div class="woh-log">
-            <div class="woh-log-entries" role="log" aria-live="polite" data-role="log-entries"></div>
-          </div>
-        </article>
-      </section>
-      <section class="woh-column woh-column--interaction">
         <article
           class="woh-panel woh-panel--glass woh-panel--interaction"
           data-panel="interaction"
@@ -103,6 +93,14 @@ const TEMPLATE = `
                 </button>
               </div>
             </div>
+          </div>
+        </article>
+        <article class="woh-panel" data-panel="log">
+          <div class="woh-panel-header">
+            <h2 class="woh-panel-title">Журнал хода</h2>
+          </div>
+          <div class="woh-log">
+            <div class="woh-log-entries" role="log" aria-live="polite" data-role="log-entries"></div>
           </div>
         </article>
       </section>
