@@ -5,8 +5,6 @@ import {
   AdvanceJournalCommand,
   CompleteEventPhaseCommand,
   EndTurnCommand,
-  PlayCardCommand,
-  ResolveEventChoiceCommand,
   StartNewGameCommand,
   ToggleSoundCommand,
 } from "../game-engine/commands";
@@ -16,6 +14,9 @@ import { LogPanelView } from "./log-panel/view";
 import { StatusSidebarView } from "./status-sidebar/view";
 import { InteractionView } from "./interaction-panel/view";
 import { expectElement, type TooltipDelegate } from "./dom-utils";
+import type { GameWidget } from "./widgets/game-widget";
+import { HandWidget } from "./widgets/hand-widget";
+import { EventChoicesWidget } from "./widgets/event-choices-widget";
 
 export class GameLayout {
   private readonly root: HTMLElement;
@@ -27,40 +28,7 @@ export class GameLayout {
   private readonly newGameButton: HTMLButtonElement;
   private readonly settingsButton: HTMLButtonElement;
 
-  private readonly handleRootCommand = (event: MouseEvent) => {
-    if (!this.engine) {
-      return;
-    }
-
-    const target = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-command]');
-    if (!target) {
-      return;
-    }
-
-    const command = target.dataset.command;
-    if (command === 'play-card') {
-      const cardId = target.dataset.cardId;
-      if (cardId) {
-        const state = this.engine.getState();
-        const card = state.hand.find((handCard) => handCard.id === cardId);
-        const actionCost = card?.actionCost ?? 1;
-        if (card && card.playable && state.turn.actions.remaining >= actionCost) {
-          this.interactionView.captureCardSnapshot(cardId, target);
-        } else if (card && state.turn.actions.remaining < actionCost) {
-          this.interactionView.indicateInsufficientActions(target);
-        }
-        this.engine.dispatch(new PlayCardCommand(cardId));
-      }
-      return;
-    }
-
-    if (command === 'resolve-choice') {
-      const choiceId = target.dataset.choiceId;
-      if (choiceId) {
-        this.engine.dispatch(new ResolveEventChoiceCommand(choiceId));
-      }
-    }
-  };
+  private readonly widgets: GameWidget[];
 
   private readonly handleNewGameClick = () => {
     if (!this.engine) {
@@ -139,7 +107,12 @@ export class GameLayout {
     this.interactionView.endTurnButton.addEventListener('click', this.handleEndTurnClick);
     this.interactionView.eventContinueButton.addEventListener('click', this.handleCompleteEventClick);
     this.interactionView.endingRestartButton.addEventListener('click', this.handleNewGameClick);
-    this.root.addEventListener('click', this.handleRootCommand);
+
+    this.widgets = [
+      new HandWidget(() => this.engine, this.interactionView),
+      new EventChoicesWidget(() => this.engine),
+    ];
+    this.widgets.forEach((widget) => widget.mount(this.root));
   }
 
   public bind(engine: GameEngine): void {
@@ -163,6 +136,7 @@ export class GameLayout {
     this.logView.render(state.log, state.autoScrollLog);
     this.updateSoundToggle(state.soundEnabled);
     this.interactionView.updateGuidanceHighlights(state);
+    this.widgets.forEach((widget) => widget.render(state));
   }
 
   private updateSoundToggle(enabled: boolean): void {
